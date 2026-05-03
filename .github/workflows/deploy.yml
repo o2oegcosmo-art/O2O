@@ -30,21 +30,21 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # اذهب لمسار المشروع
-            cd /var/www/o2oeg
+            # اذهب لمسار المشروع الصحيح بناءً على خطأ السيرفر
+            cd /var/www/u525164227
             
             # تطهير كامل للملفات وجلب النسخة النظيفة
             git fetch --all
             git reset --hard origin/main
             git clean -fd
             
-            # تحديث الباك إند مع إعادة بناء قاعدة البيانات وزراعة البيانات الأساسية
+            # تحديث الباك إند
             cd backend
             composer install --no-dev --optimize-autoloader
             php artisan migrate:fresh --seed --force
             php artisan optimize
             
-            # تحديث الفرونت إند (Build Clean) ونقل الملفات للمكان الصحيح
+            # تحديث الفرونت إند ونقل الملفات
             cd ../frontend
             rm -rf dist
             npm install
