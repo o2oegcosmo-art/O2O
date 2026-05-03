@@ -214,6 +214,8 @@ Route::middleware(['auth:sanctum', 'tenant.integrations'])->group(function () {
 // مسارات المحتوى العام
 Route::get('/plans', [PlanController::class, 'index']);
 Route::post('/leads', [LeadController::class, 'store'])->middleware('throttle:3,10');
+Route::get('/leads/verify/{id}', [LeadController::class, 'verifyForCompletion']);
+Route::post('/leads/convert/{id}', [LeadController::class, 'convertToUser']);
 Route::get('/articles', [ArticleController::class, 'index']);
 Route::get('/articles/{slug}', [ArticleController::class, 'show']);
 Route::get('/events', [EventController::class, 'index']);

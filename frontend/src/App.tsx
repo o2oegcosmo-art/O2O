@@ -17,6 +17,7 @@ const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
 const SalonDashboard = lazy(() => import('@/pages/SalonDashboard'));
 const DiscoveryPage = lazy(() => import('@/pages/DiscoveryPage'));
 const AffiliateDashboard = lazy(() => import('@/pages/AffiliateDashboard'));
+const CompleteProfile = lazy(() => import('@/pages/CompleteProfile'));
 
 // Loading Placeholder
 const PageLoader = () => (
@@ -137,7 +138,8 @@ function AppContent() {
   const isDashboard = location.pathname.startsWith('/salon') || 
                       location.pathname.startsWith('/admin') || 
                       location.pathname.startsWith('/company') ||
-                      location.pathname.startsWith('/affiliate');
+                      location.pathname.startsWith('/affiliate') ||
+                      location.pathname.startsWith('/complete-profile');
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative', background: 'var(--background)' }}>
@@ -152,6 +154,7 @@ function AppContent() {
           <Route path="/events" element={<EventsPage />} />
           <Route path="/discovery" element={<DiscoveryPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/salon/:id" element={<SalonPublicPage />} />
           
           {/* Protected Dashboard Routes */}

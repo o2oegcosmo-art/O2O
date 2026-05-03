@@ -9,6 +9,11 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Payment;
 use App\Models\Subscription;
+use App\Models\User;
+use App\Models\Tenant;
+use App\Models\AffiliateMarket;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class LeadController extends Controller
 {
@@ -126,6 +131,85 @@ class LeadController extends Controller
             'message' => 'Lead status updated successfully!',
             'data' => $lead
         ]);
+    }
+
+    public function verifyForCompletion($id)
+    {
+        $lead = Lead::find($id);
+
+        if (!$lead || $lead->status !== 'accepted') {
+            return response()->json(['message' => 'رابط غير صالح أو غير مصرح به'], 404);
+        }
+
+        // Return safe data to the frontend to pre-fill the form
+        return response()->json([
+            'id' => $lead->id,
+            'name' => $lead->name,
+            'phone' => $lead->phone,
+            'interest_type' => $lead->interest_type,
+        ]);
+    }
+
+    public function convertToUser(Request $request, $id)
+    {
+        $lead = Lead::findOrFail($id);
+
+        if ($lead->status !== 'accepted') {
+            return response()->json(['message' => 'الطلب لم يتم قبوله بعد'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|string|min:6',
+            'domain' => 'nullable|string|unique:tenants,domain',
+            // Specific validations based on interest_type can be added here
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first()], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            // 1. Create the base User
+            $user = User::create([
+                'name' => $lead->name,
+                'email' => $lead->phone . '@o2oeg.com', // Using phone as unique email identifier
+                'phone' => $lead->phone,
+                'password' => Hash::make($request->password),
+                'role' => $lead->interest_type === 'affiliate' ? 'affiliate' : 'salon',
+                'business_category' => $lead->interest_type === 'company' ? 'company' : ($lead->interest_type === 'salon' ? 'salon' : null),
+            ]);
+
+            // 2. Create the associated entity based on type
+            if ($lead->interest_type === 'salon' || $lead->interest_type === 'company') {
+                $tenant = Tenant::create([
+                    'user_id' => $user->id,
+                    'name' => $lead->name,
+                    'domain' => $request->domain ?? uniqid('brand-'),
+                    'business_category' => $lead->interest_type === 'company' ? 'company' : 'salon',
+                    'status' => 'active', // Automatically active since they were accepted
+                ]);
+            } elseif ($lead->interest_type === 'affiliate') {
+                AffiliateMarket::create([
+                    'user_id' => $user->id,
+                    'promo_code' => strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $lead->name), 0, 5) . rand(100, 999)),
+                    'commission_percentage' => 10, // Default 10%
+                    'status' => 'active'
+                ]);
+            }
+
+            // 3. Delete the lead to prevent duplicate conversion
+            $lead->delete();
+
+            DB::commit();
+
+            return response()->json(['message' => 'تم إنشاء الحساب بنجاح!'], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Lead conversion failed: " . $e->getMessage());
+            return response()->json(['message' => 'حدث خطأ غير متوقع أثناء إعداد الحساب. يرجى المحاولة لاحقاً.'], 500);
+        }
     }
 }
 
