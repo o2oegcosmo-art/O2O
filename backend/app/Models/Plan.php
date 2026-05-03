@@ -22,7 +22,7 @@ class Plan extends Model
     }
 
     protected $fillable = [
-        'name', 'slug', 'description', 'price', 
+        'name', 'slug', 'description', 'price', 'is_free',
         'billing_interval', 'trial_period_days', 'is_active'
     ];
 

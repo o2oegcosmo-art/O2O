@@ -34,14 +34,16 @@ class ServiceController extends Controller
 
     public function store(Request $request)
     {
+        $tenantId = $request->user()->tenant_id;
+        $category = $request->user()->tenant->business_category ?? 'salon';
+
         $validator = Validator::make($request->all(), [
-            'tenant_id' => 'required|uuid|exists:tenants,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|in:active,beta,disabled',
-            'target_audience' => 'required|in:salon,company,affiliate',
-            'pricing_type' => 'required|in:subscription,addon,free',
-            'price' => 'required|numeric|min:0',
+            'status' => 'nullable|in:active,beta,disabled',
+            'target_audience' => 'nullable|in:salon,company,affiliate',
+            'pricing_type' => 'nullable|in:subscription,addon,free',
+            'price' => 'nullable|numeric|min:0',
             'features' => 'nullable|array',
             'features.*.name' => 'required|string|max:255',
             'features.*.feature_key' => 'required|string|max:255|unique:service_features,feature_key',
@@ -55,9 +57,17 @@ class ServiceController extends Controller
             ], 422);
         }
 
-        $service = Service::create($request->only([
-            'tenant_id', 'name', 'description', 'status', 'target_audience', 'pricing_type', 'price'
+        $serviceData = array_merge([
+            'tenant_id' => $tenantId,
+            'status' => 'active',
+            'target_audience' => $category,
+            'pricing_type' => 'free',
+            'price' => 0.00
+        ], $request->only([
+            'name', 'description', 'status', 'target_audience', 'pricing_type', 'price'
         ]));
+
+        $service = Service::create($serviceData);
 
         if ($request->has('features')) {
             foreach ($request->features as $featureData) {

@@ -39,6 +39,13 @@ class MahmoudWilliamSeeder extends Seeder
         // 3. إضافة الباقات الافتراضية للمنصة
         $plans = [
             [
+                'name' => 'FREE CORE PLAN',
+                'slug' => 'free',
+                'price' => 0,
+                'is_free' => true,
+                'description' => 'الخدمات الأساسية مجاناً للأبد للصالونات.',
+            ],
+            [
                 'name' => 'الباقة الأساسية (Starter)',
                 'slug' => 'starter',
                 'price' => 500,
@@ -64,11 +71,18 @@ class MahmoudWilliamSeeder extends Seeder
 
         // 4. إضافة الخدمات السيادية للمنصة
         $services = [
-            ['name' => 'الحجز الذكي', 'slug' => 'ai-booking', 'description' => 'نظام حجز آلي عبر الواتساب والويب'],
+            ['name' => 'الحجز الذكي (AI)', 'slug' => 'ai-booking', 'description' => 'نظام حجز آلي عبر الواتساب والويب'],
             ['name' => 'CRM', 'slug' => 'crm', 'description' => 'إدارة علاقات العملاء والولاء'],
             ['name' => 'Will AI', 'slug' => 'will-ai', 'description' => 'المساعد الذكي لإدارة الأعمال'],
             ['name' => 'المتجر', 'slug' => 'retail-store', 'description' => 'بيع المنتجات مباشرة للعملاء'],
             ['name' => 'الفعاليات', 'slug' => 'ads-events', 'description' => 'نظام الإعلانات والفعاليات الداخلية'],
+            
+            // Core Salon OS (Free)
+            ['name' => 'محرك الحجوزات', 'slug' => 'booking-engine', 'description' => 'التقويم اليدوي وإدارة المواعيد'],
+            ['name' => 'CRM أساسي', 'slug' => 'basic-crm', 'description' => 'قاعدة بيانات عملاء بسيطة'],
+            ['name' => 'الصفحة العامة', 'slug' => 'public-salon-page', 'description' => 'صفحة هبوط للصالون لعرض الخدمات'],
+            ['name' => 'المدفوعات اليدوية', 'slug' => 'manual-payments', 'description' => 'تسجيل المدفوعات النقدية والعربون'],
+            ['name' => 'اللوحة الأساسية', 'slug' => 'basic-dashboard', 'description' => 'نظرة عامة على نشاط الصالون'],
         ];
 
         foreach ($services as $serviceData) {

@@ -22,6 +22,7 @@ class TenantController extends Controller
             'google_ai_api_key' => 'nullable|string',
             'whatsapp_access_token' => 'nullable|string',
             'whatsapp_phone_number_id' => 'nullable|string',
+            'onboarding_completed' => 'nullable|boolean',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
         ]);

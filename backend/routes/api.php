@@ -35,6 +35,7 @@ use App\Http\Controllers\AffiliateController;
 
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); 
+Route::post('/register', [AuthController::class, 'register']); 
 
 // مسارات الـ Webhook مع Rate Limiting مشدد وحماية Signature
 Route::middleware(['throttle:webhook'])->group(function () {
@@ -169,6 +170,13 @@ Route::middleware(['auth:sanctum', 'tenant.integrations'])->group(function () {
         Route::get('/retail/orders', [RetailOrderController::class, 'index']);
         Route::get('/retail/orders/stats', [RetailOrderController::class, 'stats']);
         Route::patch('/retail/orders/{id}/status', [RetailOrderController::class, 'updateStatus']);
+
+        // مسارات النظام المالي (Finance)
+        Route::get('/finance/stats', [\App\Http\Controllers\Api\FinancialController::class, 'getStats']);
+        Route::get('/finance/expenses', [\App\Http\Controllers\Api\FinancialController::class, 'getExpenses']);
+        Route::post('/finance/expenses', [\App\Http\Controllers\Api\FinancialController::class, 'storeExpense']);
+        Route::delete('/finance/expenses/{id}', [\App\Http\Controllers\Api\FinancialController::class, 'destroyExpense']);
+        Route::get('/finance/transactions', [\App\Http\Controllers\Api\FinancialController::class, 'getTransactions']);
     });
 
     // مسارات إعدادات الصالون (لا تتطلب اشتراكاً نشطاً ليتمكن من التعديل)

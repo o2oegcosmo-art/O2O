@@ -23,6 +23,7 @@ class Tenant extends Model
         'whatsapp_access_token',
         'whatsapp_phone_number_id',
         'business_category',
+        'onboarding_completed',
         'latitude',
         'longitude',
         'referred_by',

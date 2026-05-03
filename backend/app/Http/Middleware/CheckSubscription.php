@@ -41,21 +41,24 @@ class CheckSubscription
             return $next($request);
         }
 
-        $subscription = $tenant->activeSubscription; // التحقق من الحالة وصلاحية التاريخ فوراً
+        $subscription = $tenant->activeSubscription;
 
-        // 2. التحقق من حالة الاشتراك (هل هو نشط؟)
-        if (!$subscription) {
-            return response()->json([
-                'error' => 'subscription_required',
-                'message' => 'تحتاج إلى اشتراك نشط للوصول إلى هذه الخدمة.'
-            ], 402);
-        }
+        // 2. التحقق من حالة الاشتراك أو التفعيل اليدوي من الإدارة
+        $isExplicitlyEnabled = $tenant->services()->where('slug', $serviceSlug)->wherePivot('status', 'active')->exists();
+        $isInPlan = $subscription && $serviceSlug && $subscription->plan->services()->where('slug', $serviceSlug)->exists();
 
-        // 3. التحقق من توفر الخدمة في باقة الاشتراك الحالية
-        if ($serviceSlug && !$subscription->plan->services()->where('slug', $serviceSlug)->exists()) {
+        // إذا لم تكن الخدمة مجانية (تحتاج slug) ولم تكن مفعلة يدوياً ولا في الخطة، اطلب الاشتراك
+        if ($serviceSlug && !$isExplicitlyEnabled && !$isInPlan) {
+             if (!$subscription) {
+                return response()->json([
+                    'error' => 'subscription_required',
+                    'message' => 'تحتاج إلى اشتراك نشط للوصول إلى هذه الخدمة.'
+                ], 402);
+            }
+            
             return response()->json([
                 'error' => 'plan_limit_reached',
-                'message' => 'باقتك الحالية لا تدعم هذه الخاصية. يرجى الترقية.'
+                'message' => 'باقتك الحالية لا تدعم هذه الخاصية. يرجى الترقية أو التواصل مع الإدارة.'
             ], 403);
         }
 
