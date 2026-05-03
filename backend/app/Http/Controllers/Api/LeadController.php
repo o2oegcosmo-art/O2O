@@ -25,7 +25,7 @@ class LeadController extends Controller
             'phone' => 'required|string|max:50',
             'governorate' => 'required|string|max:100',
             'interest_type' => 'required|in:salon,company,affiliate',
-            'social_link' => 'required|url|max:500',
+            'social_link' => ['required', 'url', 'max:500', 'regex:/^(https?:\/\/)?(www\.)?(facebook\.com|instagram\.com|tiktok\.com|linkedin\.com)\/.+/i'],
             'message' => 'nullable|string',
             'ref_code' => 'nullable|string', // Removed 'exists' check temporarily to prevent 500 errors during deployment transition
         ]);

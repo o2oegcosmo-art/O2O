@@ -38,6 +38,14 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, initialInterest })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.governorate) { alert('يرجى اختيار المحافظة'); return; }
+
+    const validSocialRegex = /^(https?:\/\/)?(www\.)?(facebook\.com|instagram\.com|tiktok\.com|linkedin\.com)\/.+/i;
+    if (!validSocialRegex.test(formData.social_link)) {
+      setErrorMessage('عذراً، لأسباب أمنية نقبل فقط الروابط الرسمية (فيسبوك، إنستجرام، تيك توك، لينكدان).');
+      setStatus('error');
+      return;
+    }
+
     setStatus('loading');
     
     // Check for referral cookie
@@ -196,9 +204,14 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, initialInterest })
 
                   {/* Social Link */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.5rem' }}>رابط صفحتك أو حسابك (فيسبوك، إنستجرام، تيك توك)</label>
-                    <input required type="url" placeholder="https://..." style={inputStyle} value={formData.social_link}
-                      onChange={e => setFormData({ ...formData, social_link: e.target.value })} />
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+                      رابط حسابك (فيسبوك، إنستجرام، تيك توك) <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input required type="url" placeholder="https://www.facebook.com/..." style={inputStyle} value={formData.social_link}
+                      onChange={e => {
+                        setFormData({ ...formData, social_link: e.target.value });
+                        if (status === 'error') setStatus('idle'); // Clear error when typing
+                      }} />
                   </div>
 
                   {/* Message */}
