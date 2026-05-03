@@ -2,12 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
+// المحرك الذكي والقوي لتحميل الواجهة من أي مسار متاح
+function serveFrontend() {
     $paths = [
         public_path('index.html'),
         base_path('../public/index.html'),
         base_path('public/index.html'),
-        '/var/www/u525164227/public/index.html'
+        '/var/www/o2oeg/backend/public/index.html',
+        '/var/www/o2oeg/public/index.html',
+        '/var/www/u525164227/public/index.html',
+        '/var/www/u525164227/backend/public/index.html'
     ];
 
     foreach ($paths as $path) {
@@ -16,34 +20,21 @@ Route::get('/', function () {
         }
     }
     
-    return response("Frontend not found. Please check deployment.", 404);
+    return response("System is updating... Please refresh in 1 minute. (Frontend Not Found)", 404);
+}
+
+Route::get('/', function () {
+    return serveFrontend();
 });
 
-// الحل القاتل: دعم الـ POST والـ GET في مسار الـ Web وتوجيهه للمحرك الصحيح
+// دعم الـ POST والـ GET في مسار الـ login
 Route::match(['get', 'post'], '/login', [\App\Http\Controllers\Api\AuthController::class, 'login'])->name('login');
 
-// مسار احتياطي للـ GET فقط لإظهار رسالة واضحة
 Route::get('/login-status', function() {
     return response()->json(['status' => 'online', 'message' => 'Login system is active.']);
 });
 
-// المحرك الذكي لتحميل الواجهة من أي مسار متاح لجميع الروابط
+// المحرك الذكي لجميع الروابط الأخرى
 Route::get('/{any}', function () {
-    $paths = [
-        public_path('index.html'),
-        base_path('../public/index.html'),
-        base_path('public/index.html'),
-        '/var/www/u525164227/public/index.html'
-    ];
-
-    foreach ($paths as $path) {
-        if (file_exists($path)) {
-            return file_get_contents($path);
-        }
-    }
-
-    return response()->json([
-        'error' => 'Frontend build not found',
-        'checked_paths' => $paths
-    ], 404);
+    return serveFrontend();
 })->where('any', '.*');

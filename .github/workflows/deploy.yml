@@ -30,40 +30,49 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # الدخول للمجلد الرئيسي
-            cd /var/www/u525164227
+            # محاولة تحديد المجلد الصحيح تلقائياً
+            if [ -d "/var/www/o2oeg" ]; then
+                ROOT="/var/www/o2oeg"
+            elif [ -d "/var/www/u525164227" ]; then
+                ROOT="/var/www/u525164227"
+            else
+                ROOT=$(pwd)
+            fi
+            
+            cd $ROOT
+            echo "Working in: $ROOT"
             
             # جلب الكود الجديد
             git fetch --all
             git reset --hard origin/main
             git clean -fd
             
-            # تحديث الباك إند (سواء كان في المجلد الرئيسي أو في مجلد backend)
+            # تحديث الباك إند وتنظيف الكاش القاتل
             if [ -d "backend" ]; then
                 cd backend
-                composer install --no-dev --optimize-autoloader
-                php artisan migrate --force
-                php artisan optimize:clear
-                cd ..
-            else
-                composer install --no-dev --optimize-autoloader
-                php artisan migrate --force
-                php artisan optimize:clear
             fi
             
-            # تحديث وبناء الفرونت إند
-            cd frontend
+            composer install --no-dev --optimize-autoloader
+            php artisan migrate --force
+            php artisan cache:clear
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+            php artisan optimize:clear
+            
+            # العودة للمجلد الرئيسي وبناء الفرونت إند
+            cd $ROOT/frontend
             npm install
             npm run build
             
-            # الحل الجذري: نسخ الملفات إلى كافة المجلدات العامة المحتملة
-            # 1. المجلد العام الرئيسي (المذكور في الخطأ)
-            mkdir -p ../public
-            cp -r dist/* ../public/
+            # نسخ الملفات لكل الأماكن المحتملة لضمان استعادة الموقع
+            # 1. المجلد العام في الجذر
+            mkdir -p $ROOT/public
+            cp -r dist/* $ROOT/public/
             
-            # 2. مجلد public داخل backend (إذا وجد)
-            if [ -d "../backend/public" ]; then
-                cp -r dist/* ../backend/public/
+            # 2. مجلد public داخل backend
+            if [ -d "$ROOT/backend/public" ]; then
+                cp -r dist/* $ROOT/backend/public/
             fi
             
-            echo "🚀 O2OEG Platform has been REBORN and is now LIVE!"
+            echo "🚀 O2OEG Platform has been REBORN and is now LIVE on $ROOT!"
