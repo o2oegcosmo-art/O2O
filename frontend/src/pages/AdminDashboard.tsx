@@ -417,7 +417,7 @@ const AdminDashboard: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="p-6 md:p-12">
+                <div className="p-4 md:p-12">
                 <AnimatePresence mode="wait">
                     <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="max-w-6xl mx-auto space-y-8">
 
@@ -462,7 +462,32 @@ const AdminDashboard: React.FC = () => {
                         {activeTab === 'leads' && (
                             <div className="space-y-6">
                                 <h2 className="text-2xl font-bold">إدارة المهتمين</h2>
-                                <div className="bg-[#121214] border border-white/5 rounded-[32px] overflow-hidden">
+                                
+                                {/* Mobile View: Cards */}
+                                <div className="md:hidden space-y-4">
+                                    {leads.map(lead => (
+                                        <div key={lead.id} className="bg-[#121214] border border-white/5 p-4 rounded-[24px] space-y-3">
+                                            <div className="flex justify-between items-start">
+                                                <h3 className="font-bold text-base">{lead.name}</h3>
+                                                <span className={`px-2 py-1 rounded-lg text-[9px] font-bold ${lead.interest_type === 'salon' ? 'bg-fuchsia-500/10 text-fuchsia-400' : 'bg-cyan-500/10 text-cyan-400'}`}>
+                                                    {lead.interest_type === 'salon' ? 'صالون' : 'شركة'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="text-white/40">الموبايل:</span>
+                                                <span className="font-mono text-cyan-400" dir="ltr">{lead.phone}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="text-white/40">المحافظة:</span>
+                                                <span className="text-white/60">{lead.governorate}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {leads.length === 0 && <p className="text-center text-white/20 py-8">لا يوجد مهتمين حالياً</p>}
+                                </div>
+
+                                {/* Desktop View: Table */}
+                                <div className="hidden md:block bg-[#121214] border border-white/5 rounded-[32px] overflow-hidden">
                                     <table className="w-full text-right">
                                         <thead className="bg-white/5 border-b border-white/5">
                                             <tr><th className="p-6">الاسم</th><th className="p-6">الموبايل</th><th className="p-6">المحافظة</th><th className="p-6">النوع</th></tr>
@@ -702,28 +727,54 @@ const AdminDashboard: React.FC = () => {
                         {activeTab === 'ai_monitor' && stats && (
                             <div className="space-y-8">
                                 <h2 className="text-2xl font-bold flex items-center gap-3"><Shield className="text-green-400" /> مراقب AI Shield</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    <div className="bg-[#121214] p-8 rounded-[40px] border border-white/5">
-                                        <h4 className="text-white/40 text-xs mb-2">الرسائل</h4>
-                                        <p className="text-3xl font-black text-cyan-400">{stats.aiStats?.totalMessages}</p>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                                    <div className="bg-[#121214] p-5 md:p-8 rounded-[24px] md:rounded-[40px] border border-white/5">
+                                        <h4 className="text-white/40 text-[10px] md:text-xs mb-1 md:mb-2">الرسائل</h4>
+                                        <p className="text-2xl md:text-3xl font-black text-cyan-400">{stats.aiStats?.totalMessages}</p>
                                     </div>
-                                    <div className="bg-[#121214] p-8 rounded-[40px] border border-white/5">
-                                        <h4 className="text-white/40 text-xs mb-2">سبام</h4>
-                                        <p className="text-3xl font-black text-red-400">{stats.aiStats?.spamAlerts}</p>
+                                    <div className="bg-[#121214] p-5 md:p-8 rounded-[24px] md:rounded-[40px] border border-white/5">
+                                        <h4 className="text-white/40 text-[10px] md:text-xs mb-1 md:mb-2">سبام</h4>
+                                        <p className="text-2xl md:text-3xl font-black text-red-400">{stats.aiStats?.spamAlerts}</p>
                                     </div>
-                                    <div className="bg-[#121214] p-8 rounded-[40px] border border-white/5">
-                                        <h4 className="text-white/40 text-xs mb-2">هلوسة لغوية</h4>
-                                        <p className="text-3xl font-black text-amber-400">{stats.aiStats?.hallucinationAlerts ?? 0}</p>
+                                    <div className="bg-[#121214] p-5 md:p-8 rounded-[24px] md:rounded-[40px] border border-white/5">
+                                        <h4 className="text-white/40 text-[10px] md:text-xs mb-1 md:mb-2">هلوسة</h4>
+                                        <p className="text-2xl md:text-3xl font-black text-amber-400">{stats.aiStats?.hallucinationAlerts ?? 0}</p>
                                     </div>
-                                    <div className="bg-[#121214] p-8 rounded-[40px] border border-white/5">
-                                        <h4 className="text-white/40 text-xs mb-2">الدقة</h4>
-                                        <p className="text-3xl font-black text-green-400">{stats?.aiStats?.aiSuccessRate ?? 0}%</p>
+                                    <div className="bg-[#121214] p-5 md:p-8 rounded-[24px] md:rounded-[40px] border border-white/5">
+                                        <h4 className="text-white/40 text-[10px] md:text-xs mb-1 md:mb-2">الدقة</h4>
+                                        <p className="text-2xl md:text-3xl font-black text-green-400">{stats?.aiStats?.aiSuccessRate ?? 0}%</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-lg">سجل الرقابة العسكرية (AI Audit Log)</h3>
-                                    <div className="bg-[#121214] rounded-[40px] overflow-hidden border border-white/5">
+                                    
+                                    {/* Mobile View: Cards */}
+                                    <div className="md:hidden space-y-4">
+                                        {aiSecurityLogs.map((log) => (
+                                            <div key={log.id} className={`bg-[#121214] p-4 rounded-[24px] border ${log.is_hallucination ? 'border-red-500/30 bg-red-500/5' : 'border-white/5'} space-y-3`}>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-sm text-cyan-400">{log.tenant_name || 'نظام عام'}</span>
+                                                    {log.is_hallucination ? (
+                                                        <span className="text-red-400 text-[10px] font-bold flex items-center gap-1"><XCircle size={12} /> هلوسة</span>
+                                                    ) : (
+                                                        <span className="text-green-400 text-[10px] font-bold flex items-center gap-1"><CheckCircle size={12} /> آمن</span>
+                                                    )}
+                                                </div>
+                                                <div className="text-[11px] text-white/60 bg-black/20 p-3 rounded-xl border border-white/5">
+                                                    <p className="text-white/30 mb-1">الرد:</p>
+                                                    <p className="line-clamp-3">{log.response_received}</p>
+                                                </div>
+                                                <div className="flex justify-between items-center text-[9px] text-white/20">
+                                                    <span>ميزة: {log.feature}</span>
+                                                    <span>{new Date(log.created_at).toLocaleTimeString('ar-EG')}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Desktop View: Table */}
+                                    <div className="hidden md:block bg-[#121214] rounded-[40px] overflow-hidden border border-white/5">
                                         <table className="w-full text-right text-xs">
                                             <thead className="bg-white/5 border-b border-white/5">
                                                 <tr>
@@ -871,101 +922,159 @@ const AdminDashboard: React.FC = () => {
                                     ))}
                                 </div>
 
-                                {/* Affiliates Table */}
-                                <div className="bg-[#121214] border border-white/5 rounded-[40px] overflow-hidden">
-                                    <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                                        <h3 className="font-bold text-lg">قائمة المسوقين</h3>
-                                        <span className="text-xs text-white/30 bg-white/5 px-3 py-1 rounded-full">{affiliates.length} مسوق مسجل</span>
+                                {/* Affiliates Content */}
+                                <div className="space-y-6">
+                                    {/* Mobile View: Cards */}
+                                    <div className="md:hidden space-y-4">
+                                        {affiliates.map((aff) => (
+                                            <div key={aff.id} className="bg-[#121214] p-5 rounded-[28px] border border-white/5 space-y-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <div className="font-bold text-base">{aff.user?.name}</div>
+                                                        <div className="text-[10px] text-white/30 font-mono">{aff.user?.phone}</div>
+                                                    </div>
+                                                    <span className={`text-[9px] font-bold px-3 py-1 rounded-full border ${
+                                                        aff.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                    }`}>
+                                                        {aff.status === 'active' ? 'نشط' : 'موقوف'}
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4 bg-black/20 p-4 rounded-2xl border border-white/5">
+                                                    <div>
+                                                        <p className="text-[9px] text-white/30 mb-1">كود التسويق</p>
+                                                        <p className="text-xs font-bold text-fuchsia-400">{aff.promo_code}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-white/30 mb-1">الرصيد</p>
+                                                        <p className="text-xs font-bold text-amber-400">{aff.balance?.toLocaleString()} ج.م</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    {aff.balance > 0 && (
+                                                        <button 
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await api.post(`/admin/affiliates/${aff.id}/payout`);
+                                                                    toast.success(`تم صرف ${aff.balance} ج.م`);
+                                                                    fetchData();
+                                                                } catch { toast.error('خطأ في الصرف'); }
+                                                            }}
+                                                            className="flex-1 py-3 bg-green-500/10 text-green-400 border border-green-500/20 rounded-xl text-[10px] font-bold"
+                                                        >
+                                                            صرف الرصيد
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        onClick={async () => {
+                                                            try {
+                                                                await api.patch(`/admin/affiliates/${aff.id}/toggle-status`);
+                                                                fetchData();
+                                                            } catch { toast.error('خطأ'); }
+                                                        }}
+                                                        className="flex-1 py-3 bg-white/5 text-white/40 border border-white/10 rounded-xl text-[10px] font-bold"
+                                                    >
+                                                        تغيير الحالة
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
 
-                                    {affiliates.length === 0 ? (
-                                        <div className="p-20 text-center">
-                                            <UserCheck size={40} className="text-white/10 mx-auto mb-4" />
-                                            <p className="text-white/20 text-sm">لا يوجد مسوقون مسجلون حتى الآن</p>
+                                    {/* Desktop View: Table */}
+                                    <div className="hidden md:block bg-[#121214] border border-white/5 rounded-[40px] overflow-hidden">
+                                        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                                            <h3 className="font-bold text-lg">قائمة المسوقين</h3>
+                                            <span className="text-xs text-white/30 bg-white/5 px-3 py-1 rounded-full">{affiliates.length} مسوق مسجل</span>
                                         </div>
-                                    ) : (
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-right text-sm">
-                                                <thead className="bg-white/5 border-b border-white/5">
-                                                    <tr>
-                                                        <th className="p-5 text-white/40 font-bold">المسوق</th>
-                                                        <th className="p-5 text-white/40 font-bold">كود التسويق</th>
-                                                        <th className="p-5 text-white/40 font-bold">النسبة</th>
-                                                        <th className="p-5 text-white/40 font-bold">الرصيد</th>
-                                                        <th className="p-5 text-white/40 font-bold">إجمالي الأرباح</th>
-                                                        <th className="p-5 text-white/40 font-bold">الحالة</th>
-                                                        <th className="p-5 text-white/40 font-bold">إجراء</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {affiliates.map((aff) => (
-                                                        <tr key={aff.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                                                            <td className="p-5">
-                                                                <div className="font-bold">{aff.user?.name}</div>
-                                                                <div className="text-xs text-white/30 font-mono">{aff.user?.phone}</div>
-                                                            </td>
-                                                            <td className="p-5">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Link size={12} className="text-fuchsia-400" />
-                                                                    <span className="font-mono font-bold text-fuchsia-300 bg-fuchsia-500/10 px-2 py-0.5 rounded-lg text-xs">{aff.promo_code}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="p-5">
-                                                                <span className="text-cyan-400 font-black">{aff.commission_percentage}%</span>
-                                                            </td>
-                                                            <td className="p-5">
-                                                                <span className={`font-bold ${aff.balance > 0 ? 'text-amber-400' : 'text-white/30'}`}>
-                                                                    {(aff.balance || 0).toLocaleString()} ج.م
-                                                                </span>
-                                                            </td>
-                                                            <td className="p-5">
-                                                                <span className="text-green-400 font-bold">{(aff.total_earned || 0).toLocaleString()} ج.م</span>
-                                                            </td>
-                                                            <td className="p-5">
-                                                                <button 
-                                                                    onClick={async () => {
-                                                                        try {
-                                                                            await api.patch(`/admin/affiliates/${aff.id}/toggle-status`);
-                                                                            toast.success(`تم تحديث حالة المسوق ${aff.user?.name}`);
-                                                                            fetchData();
-                                                                        } catch {
-                                                                            toast.error('خطأ في تحديث الحالة');
-                                                                        }
-                                                                    }}
-                                                                    className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-all cursor-pointer ${
-                                                                        aff.status === 'active'
-                                                                            ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500 hover:text-black'
-                                                                            : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500 hover:text-white'
-                                                                    }`}>
-                                                                    {aff.status === 'active' ? 'نشط' : 'موقوف'}
-                                                                </button>
-                                                            </td>
-                                                            <td className="p-5">
-                                                                {aff.balance > 0 && (
-                                                                    <button
+
+                                        {affiliates.length === 0 ? (
+                                            <div className="p-20 text-center">
+                                                <UserCheck size={40} className="text-white/10 mx-auto mb-4" />
+                                                <p className="text-white/20 text-sm">لا يوجد مسوقون مسجلون حتى الآن</p>
+                                            </div>
+                                        ) : (
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-right text-sm">
+                                                    <thead className="bg-white/5 border-b border-white/5">
+                                                        <tr>
+                                                            <th className="p-5 text-white/40 font-bold">المسوق</th>
+                                                            <th className="p-5 text-white/40 font-bold">كود التسويق</th>
+                                                            <th className="p-5 text-white/40 font-bold">النسبة</th>
+                                                            <th className="p-5 text-white/40 font-bold">الرصيد</th>
+                                                            <th className="p-5 text-white/40 font-bold">إجمالي الأرباح</th>
+                                                            <th className="p-5 text-white/40 font-bold">الحالة</th>
+                                                            <th className="p-5 text-white/40 font-bold">إجراء</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {affiliates.map((aff) => (
+                                                            <tr key={aff.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                                                                <td className="p-5">
+                                                                    <div className="font-bold">{aff.user?.name}</div>
+                                                                    <div className="text-xs text-white/30 font-mono">{aff.user?.phone}</div>
+                                                                </td>
+                                                                <td className="p-5">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Link size={12} className="text-fuchsia-400" />
+                                                                        <span className="font-mono font-bold text-fuchsia-300 bg-fuchsia-500/10 px-2 py-0.5 rounded-lg text-xs">{aff.promo_code}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="p-5">
+                                                                    <span className="text-cyan-400 font-black">{aff.commission_percentage}%</span>
+                                                                </td>
+                                                                <td className="p-5">
+                                                                    <span className={`font-bold ${aff.balance > 0 ? 'text-amber-400' : 'text-white/30'}`}>
+                                                                        {(aff.balance || 0).toLocaleString()} ج.م
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-5">
+                                                                    <span className="text-green-400 font-bold">{(aff.total_earned || 0).toLocaleString()} ج.م</span>
+                                                                </td>
+                                                                <td className="p-5">
+                                                                    <button 
                                                                         onClick={async () => {
-                                                                            // Mark all approved commissions as paid for this affiliate
                                                                             try {
-                                                                                await api.post(`/admin/affiliates/${aff.id}/payout`);
-                                                                                toast.success(`تم صرف ${aff.balance} ج.م للمسوق ${aff.user?.name}`);
+                                                                                await api.patch(`/admin/affiliates/${aff.id}/toggle-status`);
+                                                                                toast.success(`تم تحديث حالة المسوق ${aff.user?.name}`);
                                                                                 fetchData();
                                                                             } catch {
-                                                                                toast.error('خطأ في عملية الصرف');
+                                                                                toast.error('خطأ في تحديث الحالة');
                                                                             }
                                                                         }}
-                                                                        className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-xl text-xs font-bold hover:bg-green-500 hover:text-black transition-all"
-                                                                    >
-                                                                        <Banknote size={12} /> صرف الرصيد
+                                                                        className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-all cursor-pointer ${
+                                                                            aff.status === 'active'
+                                                                                ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500 hover:text-black'
+                                                                                : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500 hover:text-white'
+                                                                        }`}>
+                                                                        {aff.status === 'active' ? 'نشط' : 'موقوف'}
                                                                     </button>
-                                                                )}
-                                                                {!aff.balance && <span className="text-xs text-white/20">لا يوجد رصيد</span>}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
+                                                                </td>
+                                                                <td className="p-5">
+                                                                    {aff.balance > 0 && (
+                                                                        <button
+                                                                            onClick={async () => {
+                                                                                try {
+                                                                                    await api.post(`/admin/affiliates/${aff.id}/payout`);
+                                                                                    toast.success(`تم صرف ${aff.balance} ج.م للمسوق ${aff.user?.name}`);
+                                                                                    fetchData();
+                                                                                } catch {
+                                                                                    toast.error('خطأ في عملية الصرف');
+                                                                                }
+                                                                            }}
+                                                                            className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 border border-green-500/20 rounded-xl text-xs font-bold hover:bg-green-500 hover:text-black transition-all"
+                                                                        >
+                                                                            <Banknote size={12} /> صرف الرصيد
+                                                                        </button>
+                                                                    )}
+                                                                    {!aff.balance && <span className="text-xs text-white/20">لا يوجد رصيد</span>}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </motion.div>
                         )}
@@ -1108,10 +1217,10 @@ const AdminDashboard: React.FC = () => {
                 {showServiceModal && selectedTenant && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowServiceModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-3xl bg-[#121214] border border-white/10 rounded-[40px] p-10 shadow-2xl">
-                            <button onClick={() => setShowServiceModal(false)} className="absolute top-8 left-8 text-white/20 hover:text-white transition-all"><X size={24} /></button>
-                            <h3 className="text-3xl font-black mb-8 text-right">تعديل موديولات {selectedTenant.name}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-3xl bg-[#121214] border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-10 shadow-2xl overflow-hidden">
+                            <button onClick={() => setShowServiceModal(false)} className="absolute top-6 left-6 md:top-8 md:left-8 text-white/20 hover:text-white transition-all"><X size={24} /></button>
+                            <h3 className="text-2xl md:text-3xl font-black mb-6 md:mb-8 text-right">تعديل موديولات {selectedTenant.name}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
                                 {allServices.length === 0 ? (
                                     <p className="text-white/40 text-center py-4 col-span-2">جاري تحميل قائمة الخدمات السيادية...</p>
                                 ) : allServices.map(service => {
@@ -1130,7 +1239,7 @@ const AdminDashboard: React.FC = () => {
                 {showArticleModal && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowArticleModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-md bg-[#121214] border border-white/10 rounded-[40px] p-8">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-md bg-[#121214] border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-8">
                             <button onClick={() => setShowArticleModal(false)} className="absolute top-6 left-6 text-white/20 hover:text-white transition-all"><X size={20} /></button>
                             <h3 className="text-2xl font-bold mb-6 text-right">نشر مقال جديد</h3>
                             <form onSubmit={handleArticleSubmit} className="space-y-4">
@@ -1148,7 +1257,7 @@ const AdminDashboard: React.FC = () => {
                 {showPlanModal && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowPlanModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-md bg-[#121214] border border-white/10 rounded-[40px] p-8">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-md bg-[#121214] border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-8">
                             <button onClick={() => setShowPlanModal(false)} className="absolute top-6 left-6 text-white/20 hover:text-white transition-all"><X size={20} /></button>
                             <h3 className="text-2xl font-bold mb-6 text-right">{editingPlan ? 'تعديل باقة' : 'إضافة باقة'}</h3>
                              <form onSubmit={handlePlanSubmit} className="space-y-4">
@@ -1187,7 +1296,7 @@ const AdminDashboard: React.FC = () => {
                 {showTicketModal && selectedTicket && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowTicketModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-md bg-[#121214] border border-white/10 rounded-[40px] p-8">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-md bg-[#121214] border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-8">
                             <button onClick={() => setShowTicketModal(false)} className="absolute top-6 left-6 text-white/20 hover:text-white transition-all"><X size={20} /></button>
                             <h3 className="text-2xl font-bold mb-2 text-right">{selectedTicket.subject}</h3>
                             <p className="text-xs text-white/40 mb-6">الصالون: {selectedTicket.salon}</p>
@@ -1210,7 +1319,7 @@ const AdminDashboard: React.FC = () => {
                 {showCompanyStatsModal && selectedCompanyStats && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCompanyStatsModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-2xl bg-[#121214] border border-white/10 rounded-[40px] p-8 shadow-2xl">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-2xl bg-[#121214] border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-8 shadow-2xl">
                             <button onClick={() => setShowCompanyStatsModal(false)} className="absolute top-6 left-6 text-white/20 hover:text-white transition-all"><X size={20} /></button>
                             
                             <div className="flex items-center gap-4 mb-8">
