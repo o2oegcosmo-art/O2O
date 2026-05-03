@@ -1,0 +1,93 @@
+{
+  "project": "O2OEG SaaS Platform",
+  "type": "AI-FIRST MULTI-TENANT SAAS",
+  "agent_rules": {
+    "language": "Arabic RTL",
+    "strict_mode": true,
+    "no_out_of_scope": true,
+    "ask_before_new_feature": true
+  },
+  "sprints": [
+    {
+      "id": 0,
+      "name": "Project Bootstrap",
+      "tasks": [
+        "Laravel setup",
+        "React setup RTL",
+        "DB setup",
+        "Redis setup"
+      ],
+      "output": "Running base system"
+    },
+    {
+      "id": 1,
+      "name": "SaaS Foundation + Service Engine",
+      "tasks": [
+        "Multi-tenant core",
+        "Service Engine",
+        "Prelaunch page"
+      ],
+      "output": "SaaS skeleton + lead page"
+    },
+    {
+      "id": 2,
+      "name": "Subscription & Billing Engine",
+      "tasks": [
+        "Plans",
+        "Subscriptions",
+        "Add-ons"
+      ],
+      "output": "Monetization system"
+    },
+    {
+      "id": 3,
+      "name": "Booking System",
+      "tasks": [
+        "Availability",
+        "Appointments",
+        "Staff schedules"
+      ],
+      "output": "Salon booking engine"
+    },
+    {
+      "id": 4,
+      "name": "AI WhatsApp Reception",
+      "tasks": [
+        "Node AI service",
+        "Webhook",
+        "Chat simulation"
+      ],
+      "output": "AI receptionist"
+    },
+    {
+      "id": 5,
+      "name": "AI Business Consultant",
+      "tasks": [
+        "Marketing AI",
+        "Sales AI",
+        "Content generator"
+      ],
+      "output": "B2B AI SaaS"
+    },
+    {
+      "id": 6,
+      "name": "Affiliate Engine",
+      "tasks": [
+        "Referral system",
+        "Tracking",
+        "Commissions"
+      ],
+      "output": "Growth engine"
+    },
+    {
+      "id": 7,
+      "name": "Admin Analytics",
+      "tasks": [
+        "MRR dashboard",
+        "Logs",
+        "Analytics"
+      ],
+      "output": "Company control center"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+vendor/
+backend/vendor/
+backend/node_modules/
+frontend/node_modules/
+whatsapp-bridge/node_modules/
+
+# Build outputs
+dist/
+frontend/dist/
+build/
+
+# Environment and Secrets
+.env
+backend/.env
+frontend/.env
+*.key
+*.pem
+
+# Laravel Specific
+backend/storage/*.key
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+backend/public/storage
+
+# Bridge Specific
+whatsapp-bridge/auth_info*/
+whatsapp-bridge/sessions/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+.phpunit.result.cache
