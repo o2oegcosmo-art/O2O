@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import {
     Clock,
@@ -6,7 +6,12 @@ import {
     ChevronRight,
     ChevronLeft,
     Sparkles,
-    MapPin
+    MapPin,
+    Banknote,
+    TrendingUp,
+    PieChart,
+    Plus,
+    Trash2
 } from 'lucide-react';
 import GoogleMapComponent from '../components/GoogleMapComponent';
 import api from '../api/config';
@@ -19,7 +24,7 @@ import RetailOrdersTab from '../components/RetailOrdersTab';
 import MarketingStudio from '../components/MarketingStudio';
 import CRMMarketing from '../components/CRMMarketing';
 
-type TabType = 'overview' | 'calendar' | 'customers' | 'staff' | 'services' | 'settings' | 'ai' | 'billing' | 'market' | 'retail-orders' | 'marketing' | 'crm-marketing' | 'whatsapp';
+type TabType = 'overview' | 'calendar' | 'customers' | 'staff' | 'services' | 'settings' | 'ai' | 'billing' | 'market' | 'retail-orders' | 'marketing' | 'crm-marketing' | 'whatsapp' | 'finance';
 
 interface Staff {
     id: string;
@@ -53,6 +58,7 @@ interface DashboardData {
     user: {
         name: string;
         role: string;
+        phone?: string;
     };
     tenant: {
         id: string;
@@ -75,12 +81,21 @@ interface DashboardData {
         whatsapp_phone_number_id?: string;
         latitude?: number;
         longitude?: number;
+        plan?: { name: string; slug: string };
+        onboarding_completed?: boolean;
     };
     subscription: {
         plan_id: string;
         status: string;
         expires_at: string;
     } | null;
+    payments?: {
+        id: string | number;
+        plan_name: string;
+        amount: number;
+        created_at: string;
+        status: string;
+    }[];
 }
 
 interface Plan {
@@ -115,6 +130,7 @@ interface Service {
     name: string;
     price: number;
     description?: string;
+    status: string;
 }
 
 interface WorkingHour {
@@ -122,6 +138,35 @@ interface WorkingHour {
     start_time: string;
     end_time: string;
     is_closed: boolean;
+}
+
+interface Expense {
+    id: string;
+    title: string;
+    amount: number;
+    category: string;
+    expense_date: string;
+}
+
+interface FinanceStats {
+    month_name: string;
+    current_month: {
+        revenue: number;
+        expenses: number;
+        profit: number;
+    };
+    previous_month: {
+        revenue: number;
+        expenses: number;
+        profit: number;
+    };
+}
+
+interface Transaction {
+    type: 'revenue' | 'expense';
+    amount: number | string;
+    description: string;
+    date: string;
 }
 
 const SalonDashboard: React.FC = () => {
@@ -146,8 +191,15 @@ const SalonDashboard: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
 
     const [showCustomerModal, setShowCustomerModal] = useState(false);
-    const [editingCustomer, setEditingCustomer] = useState<any>(null);
+    const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [customerForm, setCustomerForm] = useState({ name: '', phone: '', category: 'جديد' });
+
+    // Financial States
+    const [financeStats, setFinanceStats] = useState<FinanceStats | null>(null);
+    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [showExpenseModal, setShowExpenseModal] = useState(false);
+    const [expenseForm, setExpenseForm] = useState({ title: '', amount: '', category: 'general', expense_date: new Date().toISOString().split('T')[0], description: '' });
 
     const [serviceForm, setServiceForm] = useState({
         name: '',
@@ -192,11 +244,39 @@ const SalonDashboard: React.FC = () => {
     });
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [lockedFeature, setLockedFeature] = useState<{name: string, icon: string, slug: string} | null>(null);
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [onboardingStep, setOnboardingStep] = useState(1);
+    const [onboardingForm, setOnboardingForm] = useState({
+        salon_name: '',
+        city: '',
+        whatsapp: '',
+        opening_time: '09:00',
+        closing_time: '21:00',
+        first_service: '',
+        first_staff: ''
+    });
+
     // التحقق من تفعيل الخدمات
-    const isServiceActive = (_slug: string) => {
-        // فك الأقفال في بيئة التطوير للمعاينة
-        return true; 
-        // return (data?.tenant?.services || []).some(s => s.slug === slug && s.status === 'active');
+    const isServiceActive = (slug: string) => {
+        if (!slug) return true;
+        // الخدمات الأساسية المجانية دائماً مفعلة
+        const freeServices = ['booking-engine', 'basic-crm', 'public-salon-page', 'manual-payments', 'basic-dashboard'];
+        if (freeServices.includes(slug)) return true;
+
+        const services = data?.tenant?.services || [];
+        return services.some(s => s.slug === slug && s.status === 'active');
+    };
+
+    const handleTabClick = (tab: TabType, slug?: string, label?: string, icon?: string) => {
+        if (!slug || isServiceActive(slug)) {
+            setActiveTab(tab);
+            setSidebarOpen(false);
+        } else {
+            setLockedFeature({ name: label || '', icon: icon || 'lock', slug: slug });
+            setShowUpgradeModal(true);
+        }
     };
     const [consultantAdvice, setConsultantAdvice] = useState<ConsultantAdvice | null>(null);
     const [loadingConsultant, setLoadingConsultant] = useState(false);
@@ -214,12 +294,60 @@ const SalonDashboard: React.FC = () => {
         return localStorage.getItem('whatsapp_manual_mode') === 'true';
     });
 
-    const fetchQR = async () => {
+    const fetchFinanceData = useCallback(async () => {
+        try {
+            const [statsRes, expensesRes, transRes] = await Promise.all([
+                api.get('/finance/stats'),
+                api.get('/finance/expenses'),
+                api.get('/finance/transactions')
+            ]);
+            setFinanceStats(statsRes.data.data);
+            setExpenses(expensesRes.data.data);
+            setTransactions(transRes.data.data);
+        } catch (error) {
+            console.error('Failed to fetch finance data');
+        }
+    }, []);
+
+    const handleExpenseSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await api.post('/finance/expenses', expenseForm);
+            toast.success('تم تسجيل المصروف');
+            setShowExpenseModal(false);
+            setExpenseForm({ title: '', amount: '', category: 'general', expense_date: new Date().toISOString().split('T')[0], description: '' });
+            fetchFinanceData();
+        } catch (error) {
+            toast.error('فشل في التسجيل');
+        }
+    };
+
+    const deleteExpense = async (id: string) => {
+        if (!window.confirm('هل أنت متأكد من حذف هذا المصروف؟')) return;
+        try {
+            await api.delete(`/finance/expenses/${id}`);
+            toast.success('تم الحذف');
+            fetchFinanceData();
+        } catch (error) {
+            toast.error('فشل في الحذف');
+        }
+    };
+
+    const fetchQR = useCallback(async () => {
         if (!data?.tenant?.id) return;
         // إذا كنا في حالة إعادة ضبط، لا نتوقف بل نستمر في المحاولة لجلب الكود الجديد فور توفره
         try {
             const response = await axios.get(`http://localhost:9000/status/${data.tenant.id}`);
-            if (response.data.connected) {
+            
+            if (response.data.needsInit && !isResetting) {
+                // السيرفر يخبرنا بأنه يجب إنشاء الجلسة لأول مرة
+                setIsResetting(true);
+                try {
+                    await axios.post(`http://localhost:9000/init/${data.tenant.id}`);
+                } catch (e) {} finally {
+                    setTimeout(() => setIsResetting(false), 2000);
+                }
+            } else if (response.data.connected) {
                 setIsBridgeConnected(true);
                 setQrCode(null);
                 setManualMode(false);
@@ -236,10 +364,10 @@ const SalonDashboard: React.FC = () => {
                     setQrCode(null);
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
             // صمت عند الخطأ
         }
-    };
+    }, [data?.tenant?.id, isResetting]);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -247,6 +375,15 @@ const SalonDashboard: React.FC = () => {
                 const response = await api.get('/me');
                 const dashboardData = response.data;
                 setData(dashboardData);
+
+                if (dashboardData.tenant && !dashboardData.tenant.onboarding_completed) {
+                    setShowOnboarding(true);
+                    setOnboardingForm(prev => ({
+                        ...prev,
+                        salon_name: dashboardData.tenant.name || '',
+                        whatsapp: dashboardData.tenant.phone || ''
+                    }));
+                }
 
                 if (dashboardData.tenant) {
                     setSalonForm({
@@ -292,6 +429,9 @@ const SalonDashboard: React.FC = () => {
                     // جلب قائمة الموظفين
                     const staffRes = await api.get('/staff');
                     setStaff(staffRes.data.data || []);
+
+                    // جلب البيانات المالية
+                    fetchFinanceData();
                 } catch (subErr: unknown) {
                     if ((subErr as any).response?.status === 402 || (subErr as any).response?.status === 403) {
                         toast.error("يرجى تفعيل اشتراكك للوصول إلى كافة ميزات المنصة", { icon: '🔒' });
@@ -309,7 +449,7 @@ const SalonDashboard: React.FC = () => {
         // Fetch QR Code for AI Linking - تسريع الطلب ليكون كل ثانيتين
         const qrInterval = setInterval(fetchQR, 2000);
         return () => clearInterval(qrInterval);
-    }, [isResetting, manualMode, isBridgeConnected]);
+    }, [isResetting, manualMode, isBridgeConnected, data?.tenant?.id, fetchQR, fetchFinanceData]);
 
     const handleLogout = async () => {
         try {
@@ -438,7 +578,7 @@ const SalonDashboard: React.FC = () => {
     };
 
     const handleCustomerDelete = async (id: string | number) => {
-        if (!confirm('هل أنت متأكد من حذف هذا العميل؟ سيتم حذف سجلاته من النظام.')) return;
+        if (!window.confirm('هل أنت متأكد من حذف هذا العميل؟ سيتم حذف سجلاته من النظام.')) return;
         try {
             await api.delete(`/customers/${id}`);
             setCustomers(customers.filter(c => c.id !== id));
@@ -457,7 +597,7 @@ const SalonDashboard: React.FC = () => {
                 setServices(prev => prev.map(s => s.id === editingService.id ? res.data.data : s));
                 toast.success('✅ تم تحديث الخدمة بنجاح');
             } else {
-                const res = await api.post('/services', { ...serviceForm, tenant_id: data?.tenant.id, target_audience: 'salon', pricing_type: 'free' });
+                const res = await api.post('/services', { ...serviceForm, tenant_id: data?.tenant?.id, target_audience: 'salon', pricing_type: 'free' });
                 setServices([...services, res.data.data]);
                 toast.success('✅ تم إضافة الخدمة بنجاح');
             }
@@ -603,6 +743,44 @@ const SalonDashboard: React.FC = () => {
         return stats;
     };
 
+    const handleOnboardingSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            // 1. Update Salon Settings
+            await api.put('/salon/settings', {
+                name: onboardingForm.salon_name || data?.tenant?.name,
+                phone: onboardingForm.whatsapp || data?.user?.phone,
+                address: onboardingForm.city,
+                onboarding_completed: true
+            });
+
+            // 2. Create First Service
+            await api.post('/services', {
+                name: onboardingForm.first_service || 'خدمة عامة',
+                description: 'أول خدمة تم إنشاؤها أثناء الإعداد',
+                price: 150,
+                status: 'active'
+            });
+
+            // 3. Create First Staff
+            await api.post('/staff', {
+                name: onboardingForm.first_staff || 'موظف 1',
+                specialization: 'مصفف شعر',
+                is_active: true
+            });
+
+            toast.success('تم إكمال إعداد الصالون بنجاح!');
+            setShowOnboarding(false);
+            window.location.reload(); 
+        } catch (error: any) {
+            console.error('Onboarding Error:', error.response?.data || error);
+            toast.error('حدث خطأ أثناء إعداد الصالون، يرجى المحاولة مرة أخرى');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const weeklyStats = getWeeklyStats();
     const maxStats = Math.max(...weeklyStats, 1); // لتجنب القسمة على صفر
 
@@ -681,11 +859,11 @@ const SalonDashboard: React.FC = () => {
                     {/* --- Group 1: Core Management --- */}
                     <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] px-3 pb-2 pt-2">الإدارة الأساسية</p>
                     {[
-                        { tab: 'overview' as const, icon: 'grid_view', label: 'لوحة التحكم' },
-                        { tab: 'calendar' as const, icon: 'calendar_today', label: 'التقويم والمواعيد' },
+                        { tab: 'overview' as const, icon: 'grid_view', label: 'لوحة التحكم', slug: 'basic-dashboard' },
+                        { tab: 'calendar' as const, icon: 'calendar_today', label: 'التقويم والمواعيد', slug: 'booking-engine' },
                     ].map(item => (
                         <button key={item.tab}
-                            onClick={() => { setActiveTab(item.tab); setSidebarOpen(false); }}
+                            onClick={() => handleTabClick(item.tab, item.slug, item.label, item.icon)}
                             className={`w-full text-right flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${
                                 activeTab === item.tab
                                     ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
@@ -700,12 +878,13 @@ const SalonDashboard: React.FC = () => {
                     {/* --- Group 2: Salon Operations --- */}
                     <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] px-3 pb-2 pt-4">العمليات والتشغيل</p>
                     {[
-                        { tab: 'customers' as const, icon: 'group', label: 'قاعدة العملاء' },
-                        { tab: 'staff' as const, icon: 'person_add', label: 'إدارة الموظفين' },
-                        { tab: 'services' as const, icon: 'category', label: 'قائمة الخدمات' },
+                        { tab: 'customers' as const, icon: 'group', label: 'قاعدة العملاء', slug: 'basic-crm' },
+                        { tab: 'staff' as const, icon: 'person_add', label: 'إدارة الموظفين', slug: 'booking-engine' },
+                        { tab: 'services' as const, icon: 'category', label: 'قائمة الخدمات', slug: 'booking-engine' },
+                        { tab: 'finance' as const, icon: 'account_balance', label: 'النظام المالي', slug: 'basic-dashboard' },
                     ].map(item => (
                         <button key={item.tab}
-                            onClick={() => { setActiveTab(item.tab); setSidebarOpen(false); }}
+                            onClick={() => handleTabClick(item.tab, item.slug, item.label, item.icon)}
                             className={`w-full text-right flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${
                                 activeTab === item.tab
                                     ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
@@ -726,17 +905,18 @@ const SalonDashboard: React.FC = () => {
                          const active = isServiceActive(item.slug);
                          return (
                             <button key={item.tab}
-                                onClick={() => { if (active) { setActiveTab(item.tab); setSidebarOpen(false); } else { toast.error('هذه الخدمة غير مفعلة في اشتراكك الحالي'); } }}
+                                onClick={() => handleTabClick(item.tab, item.slug, item.label, item.icon)}
                                 className={`w-full text-right flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 border ${
                                     activeTab === item.tab
                                         ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
                                         : active
                                             ? 'text-white/40 hover:text-white/80 hover:bg-white/5 border-transparent'
-                                            : 'text-white/10 border-transparent cursor-not-allowed opacity-40'
+                                            : 'text-white/20 border-white/5 hover:bg-white/5'
                                 }`}
                             >
                                 <span className="material-symbols-outlined text-[18px]">{!active ? 'lock' : item.icon}</span>
                                 <span className="text-xs font-bold">{item.label}</span>
+                                {!active && <span className="mr-auto text-[8px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded-full">PRO</span>}
                                 {active && <span className="mr-auto w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>}
                             </button>
                          );
@@ -746,39 +926,28 @@ const SalonDashboard: React.FC = () => {
                     <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] px-3 pb-2 pt-4">النمو والذكاء الاصطناعي</p>
                     {[
                         { tab: 'ai' as const, icon: 'auto_awesome', label: 'مستشار Will AI', slug: 'will-ai', color: 'fuchsia' },
-                        { tab: 'whatsapp' as const, icon: 'chat', label: 'ربط الواتساب', slug: 'will-ai', color: 'green' },
-                        { tab: 'marketing' as const, icon: 'rocket_launch', label: 'استوديو السوشيال ميديا', slug: 'crm', color: 'pink' },
-                        { tab: 'crm-marketing' as const, icon: 'target', label: 'AI CRM Marketing', slug: 'crm-marketing', color: 'emerald' },
+                        { tab: 'whatsapp' as const, icon: 'chat', label: 'ربط الواتساب', slug: 'ai-booking', color: 'green' },
+                        { tab: 'marketing' as const, icon: 'rocket_launch', label: 'استوديو السوشيال ميديا', slug: 'marketing-studio', color: 'pink' },
+                        { tab: 'crm-marketing' as const, icon: 'target', label: 'AI CRM Marketing', slug: 'crm', color: 'emerald' },
                     ].map(item => {
                         const active = isServiceActive(item.slug);
                         const isSelected = activeTab === item.tab;
                         
-                        // Override active for crm-marketing to show it even if locked, but with lock icon
-                        const displayActive = item.tab === 'crm-marketing' ? true : active;
-                        const isLocked = item.tab === 'crm-marketing' && !active;
-
                         return (
                             <button key={item.tab}
-                                onClick={() => { 
-                                    if (displayActive) { 
-                                        setActiveTab(item.tab); 
-                                        setSidebarOpen(false); 
-                                    } else { 
-                                        toast.error('خدمة الذكاء الاصطناعي هذه غير مفعلة'); 
-                                    } 
-                                }}
+                                onClick={() => handleTabClick(item.tab, item.slug, item.label, item.icon)}
                                 className={`w-full text-right flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 border ${
                                     isSelected
                                         ? `bg-${item.color}-600/20 text-${item.color}-300 border-${item.color}-500/30 shadow-[0_0_15px_rgba(192,38,211,0.15)]`
-                                        : displayActive
+                                        : active
                                             ? `text-white/40 hover:text-white/80 hover:bg-white/5 border-transparent`
-                                            : 'text-white/10 border-transparent cursor-not-allowed opacity-40'
+                                            : 'text-white/20 border-white/5 hover:bg-white/5'
                                 }`}
                             >
-                                <span className="material-symbols-outlined text-[18px]">{isLocked ? 'lock' : item.icon}</span>
+                                <span className="material-symbols-outlined text-[18px]">{!active ? 'lock' : item.icon}</span>
                                 <span className="text-xs font-bold">{item.label}</span>
                                 {active && item.tab === 'marketing' && <span className="mr-auto text-[8px] bg-pink-500/20 px-1.5 py-0.5 rounded-full">AI</span>}
-                                {isLocked && <span className="mr-auto text-[8px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded-full">PRO</span>}
+                                {!active && <span className="mr-auto text-[8px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded-full">PRO</span>}
                             </button>
                         );
                     })}
@@ -1222,8 +1391,109 @@ const SalonDashboard: React.FC = () => {
                         </div>
                     ) : activeTab === 'market' ? (
                         <B2BMarket />
+                    ) : activeTab === 'retail-orders' ? (
+                        <RetailOrdersTab tenantId={data?.tenant?.id} />
+                    ) : activeTab === 'marketing' ? (
+                        <MarketingStudio isLocked={!isServiceActive('marketing-studio')} onUpgrade={() => setActiveTab('billing')} />
                     ) : activeTab === 'crm-marketing' ? (
-                        <CRMMarketing isLocked={!isServiceActive('crm-marketing')} onUpgrade={() => setActiveTab('billing')} />
+                        <CRMMarketing isLocked={!isServiceActive('crm')} onUpgrade={() => setActiveTab('billing')} />
+                    ) : activeTab === 'billing' ? (
+                        <section>
+                            <div className="flex justify-between items-center mb-10">
+                                <div>
+                                    <h2 className="text-3xl font-black text-white">الاشتراك والفوترة</h2>
+                                    <p className="text-slate-400 mt-2">إدارة باقة الاشتراك الحالية والترقية للوصول لميزات AI المتقدمة</p>
+                                </div>
+                                <div className="bg-emerald-500/10 border border-emerald-500/20 px-6 py-3 rounded-2xl flex items-center gap-3">
+                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                    <span className="text-emerald-400 font-bold text-sm">الباقة الحالية: {data?.tenant?.plan?.name || 'تجريبية'}</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {plans.map((plan: any) => (
+                                    <div key={plan.id} className={`glass rounded-[2.5rem] p-8 border ${plan.slug !== 'free' ? 'border-violet-500/30 bg-violet-500/5' : 'border-white/10'} flex flex-col relative overflow-hidden`}>
+                                        {plan.slug !== 'free' && (
+                                            <div className="absolute top-0 right-0 bg-violet-600 text-white text-[10px] font-black px-4 py-1 rounded-bl-xl uppercase tracking-widest">موصى به</div>
+                                        )}
+                                        <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                                        <div className="flex items-baseline gap-1 mb-6">
+                                            <span className="text-4xl font-black">{plan.price}</span>
+                                            <span className="text-slate-500 text-xs">ج.م / شهرياً</span>
+                                        </div>
+                                        <ul className="space-y-4 mb-10 flex-grow">
+                                            {plan.features && Object.entries(plan.features).map(([key, val]: any) => (
+                                                <li key={key} className="flex items-center gap-3 text-sm text-slate-300">
+                                                    <span className={`material-symbols-outlined text-sm ${val ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                        {val ? 'check_circle' : 'cancel'}
+                                                    </span>
+                                                    {key}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <button 
+                                            onClick={() => {
+                                                if (plan.slug === 'free') {
+                                                    toast.success('أنت بالفعل مشترك في الخطة الأساسية');
+                                                } else {
+                                                    setSelectedPlan(plan);
+                                                    setShowPaymentModal(true);
+                                                }
+                                            }}
+                                            className={`w-full py-4 rounded-2xl font-bold transition-all ${
+                                                plan.slug === 'free' 
+                                                ? 'bg-white/5 text-white/40 cursor-not-allowed' 
+                                                : 'bg-gradient-to-r from-violet-600 to-pink-600 text-white shadow-lg shadow-violet-600/30 hover:scale-105 active:scale-95'
+                                            }`}
+                                        >
+                                            {plan.slug === 'free' ? 'باقتك الحالية' : 'ترقية الآن'}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Payment History */}
+                            <div className="mt-12 glass rounded-[2.5rem] overflow-hidden border border-white/10">
+                                <div className="p-8 border-b border-white/10">
+                                    <h3 className="text-xl font-bold">سجل الفواتير</h3>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-right">
+                                        <thead className="bg-white/5">
+                                            <tr>
+                                                <th className="p-6 text-slate-400 text-xs font-bold uppercase">رقم الفاتورة</th>
+                                                <th className="p-6 text-slate-400 text-xs font-bold uppercase">الباقة</th>
+                                                <th className="p-6 text-slate-400 text-xs font-bold uppercase">المبلغ</th>
+                                                <th className="p-6 text-slate-400 text-xs font-bold uppercase">التاريخ</th>
+                                                <th className="p-6 text-slate-400 text-xs font-bold uppercase">الحالة</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {data?.payments?.map((payment: any) => (
+                                                <tr key={payment.id} className="border-b border-white/5 hover:bg-white/5 transition-all">
+                                                    <td className="p-6 font-mono text-sm">#{payment.id.toString().slice(-6)}</td>
+                                                    <td className="p-6 font-bold">{payment.plan_name}</td>
+                                                    <td className="p-6 font-bold text-violet-400">{payment.amount} ج.م</td>
+                                                    <td className="p-6 text-slate-400 text-sm">{new Date(payment.created_at).toLocaleDateString('ar-EG')}</td>
+                                                    <td className="p-6">
+                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                                                            payment.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : 
+                                                            payment.status === 'pending' ? 'bg-amber-500/10 text-amber-400' : 
+                                                            'bg-red-500/10 text-red-400'
+                                                        }`}>
+                                                            {payment.status === 'approved' ? 'مدفوعة' : payment.status === 'pending' ? 'قيد المراجعة' : 'ملغاة'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {(!data?.payments || data.payments.length === 0) && (
+                                                <tr><td colSpan={5} className="p-12 text-center text-slate-500 italic">لا يوجد سجل مدفوعات حالياً.</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
                     ) : activeTab === 'settings' ? (
                         <section>
                             <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '2rem' }}>إعدادات الصالون</h2>
@@ -1371,6 +1641,7 @@ const SalonDashboard: React.FC = () => {
                                                 <td className="p-4 font-bold">{s.name}</td>
                                                 <td className="p-4 text-violet-400 font-bold">{s.price} ج.م</td>
                                                 <td className="p-4 flex gap-3">
+                                                    <button onClick={() => { setEditingService(s); setServiceForm({ name: s.name, description: s.description || '', price: s.price.toString(), status: s.status }); setShowServiceModal(true); }} className="text-violet-400 text-sm hover:text-violet-300">تعديل</button>
                                                     <button onClick={() => handleDeleteService(s.id)} className="text-red-400 text-sm hover:text-red-300">حذف</button>
                                                 </td>
                                             </tr>
@@ -1489,86 +1760,131 @@ const SalonDashboard: React.FC = () => {
                                 </table>
                             </div>
                         </section>
-                    ) : activeTab === 'billing' ? (
-                        <section>
-                            <header className="mb-10 text-right" dir="rtl">
-                                <h2 className="text-3xl font-bold text-white mb-2">الاشتراكات والفوترة</h2>
-                                <p className="text-white/60">تحكم في باقة اشتراكك وفعل خدمات الذكاء الاصطناعي</p>
+                    ) : activeTab === 'finance' ? (
+                        <div className="space-y-8 animate-in fade-in duration-500" dir="rtl">
+                            <header className="flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-3xl font-bold text-white">النظام المالي</h2>
+                                    <p className="text-white/40">إدارة الإيرادات، المصروفات، وصافي الأرباح</p>
+                                </div>
+                                <button 
+                                    onClick={() => setShowExpenseModal(true)}
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-2xl flex items-center gap-2 transition-all shadow-lg shadow-emerald-600/20"
+                                >
+                                    <Plus size={20} /> تسجيل مصروفات
+                                </button>
                             </header>
 
-                            {/* Current Subscription Status */}
-                            <div className="glass rounded-3xl p-8 mb-10 border-violet-500/20 bg-gradient-to-br from-violet-600/5 to-transparent flex flex-col md:flex-row justify-between items-center gap-6">
-                                <div className="text-right">
-                                    <p className="text-xs font-bold text-violet-400 uppercase tracking-widest mb-1">الخطة الحالية</p>
-                                    <h3 className="text-2xl font-bold text-white mb-2">
-                                        {data?.subscription?.plan_id ? (
-                                            plans.find(p => p.id === data.subscription?.plan_id)?.name || 'باقة مخصصة'
-                                        ) : 'لا يوجد اشتراك نشط'}
-                                    </h3>
-                                    <div className="flex items-center gap-4 text-sm">
-                                        <span className="flex items-center gap-1 text-white/40">
-                                            <span className="material-symbols-outlined text-sm">event</span>
-                                            تاريخ الانتهاء: {data?.subscription?.expires_at ? new Date(data.subscription.expires_at).toLocaleDateString('ar-EG') : '---'}
-                                        </span>
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${data?.subscription?.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                                            {data?.subscription?.status === 'active' ? 'نشط' : 'منتهي / غير مفعل'}
-                                        </span>
+                            {/* KPI Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="glass p-8 rounded-[32px] border border-white/10">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center">
+                                            <TrendingUp size={24} />
+                                        </div>
+                                        {financeStats && (
+                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${financeStats.current_month.revenue >= financeStats.previous_month.revenue ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                {financeStats.current_month.revenue >= financeStats.previous_month.revenue ? '+' : ''}
+                                                {financeStats.previous_month.revenue > 0 ? (((financeStats.current_month.revenue - financeStats.previous_month.revenue) / financeStats.previous_month.revenue) * 100).toFixed(0) : 0}%
+                                            </span>
+                                        )}
                                     </div>
+                                    <p className="text-white/40 text-sm mb-1">إجمالي الإيرادات ({financeStats?.month_name || 'الشهر الحالي'})</p>
+                                    <h3 className="text-3xl font-black text-white">{financeStats?.current_month.revenue.toLocaleString() || 0} <span className="text-sm font-normal text-white/40">ج.م</span></h3>
                                 </div>
-                                <div className="flex gap-4">
-                                    <button onClick={() => toast.error('تواصل مع الدعم الفني لإلغاء الاشتراك')} className="px-6 py-3 rounded-xl border border-white/10 text-white/60 hover:bg-white/5 transition-all text-sm">إلغاء التجديد التلقائي</button>
+
+                                <div className="glass p-8 rounded-[32px] border border-white/10">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="w-12 h-12 bg-red-500/10 text-red-400 rounded-2xl flex items-center justify-center">
+                                            <Banknote size={24} />
+                                        </div>
+                                    </div>
+                                    <p className="text-white/40 text-sm mb-1">إجمالي المصروفات</p>
+                                    <h3 className="text-3xl font-black text-white">{financeStats?.current_month.expenses.toLocaleString() || 0} <span className="text-sm font-normal text-white/40">ج.م</span></h3>
+                                </div>
+
+                                <div className="glass p-8 rounded-[32px] border border-white/10">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-2xl flex items-center justify-center">
+                                            <PieChart size={24} />
+                                        </div>
+                                    </div>
+                                    <p className="text-white/40 text-sm mb-1">صافي الربح</p>
+                                    <h3 className="text-3xl font-black text-emerald-400">{financeStats?.current_month.profit.toLocaleString() || 0} <span className="text-sm font-normal text-white/40">ج.م</span></h3>
                                 </div>
                             </div>
 
-                            {/* Available Plans Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {plans.map((plan) => (
-                                    <div key={plan.id} className={`glass rounded-3xl p-8 flex flex-col relative transition-all duration-300 hover:-translate-y-2 ${data?.subscription?.plan_id === plan.id ? 'border-violet-500 bg-violet-500/5' : 'hover:border-white/20'}`}>
-                                        {data?.subscription?.plan_id === plan.id && (
-                                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-[10px] font-black px-4 py-1 rounded-full shadow-lg shadow-violet-600/40">
-                                                خطة اشتراكك الحالية
-                                            </div>
-                                        )}
-                                        <h4 className="text-xl font-bold text-white mb-2 text-right">{plan.name}</h4>
-                                        <div className="flex items-baseline gap-1 mb-6 justify-end">
-                                            <span className="text-3xl font-black text-white">{Number(plan.price).toLocaleString()}</span>
-                                            <span className="text-sm text-white/40">ج.م / شهر</span>
-                                        </div>
-                                        <ul className="space-y-4 mb-8 text-right flex-1" dir="rtl">
-                                            <li className="flex items-center gap-2 text-sm text-white/70">
-                                                <span className="material-symbols-outlined text-green-400 text-sm">check_circle</span>
-                                                نظام حجوزات كامل
-                                            </li>
-                                            <li className="flex items-center gap-2 text-sm text-white/70">
-                                                <span className="material-symbols-outlined text-green-400 text-sm">check_circle</span>
-                                                إدارة موظفين وخدمات
-                                            </li>
-                                            {plan.id.includes('ai') && (
-                                                <li className="flex items-center gap-2 text-sm text-indigo-400 font-bold">
-                                                    <span className="material-symbols-outlined text-sm">bolt</span>
-                                                    دخول كامل لـ Will AI
-                                                </li>
-                                            )}
-                                        </ul>
-                                        <button 
-                                            onClick={() => { setSelectedPlan(plan); setShowPaymentModal(true); }}
-                                            disabled={data?.subscription?.plan_id === plan.id}
-                                            className={`w-full py-4 rounded-2xl font-bold transition-all ${
-                                                data?.subscription?.plan_id === plan.id
-                                                    ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
-                                                    : 'bg-gradient-to-r from-violet-600 to-pink-600 text-white shadow-lg shadow-violet-600/20 hover:scale-105'
-                                            }`}
-                                        >
-                                            {data?.subscription?.plan_id === plan.id ? 'مفعل حالياً' : 'تجديد / ترقية الباقة'}
-                                        </button>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Recent Transactions */}
+                                <div className="glass rounded-[40px] overflow-hidden border border-white/10">
+                                    <div className="p-8 border-b border-white/10 flex justify-between items-center">
+                                        <h3 className="font-bold text-lg text-white">آخر العمليات المالية</h3>
                                     </div>
-                                ))}
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-right">
+                                            <thead className="bg-white/5 text-white/40 text-xs">
+                                                <tr>
+                                                    <th className="p-4">البيان</th>
+                                                    <th className="p-4">النوع</th>
+                                                    <th className="p-4">المبلغ</th>
+                                                    <th className="p-4">التاريخ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-sm">
+                                                {transactions.map((tr, i) => (
+                                                    <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                                        <td className="p-4 font-bold text-white">{tr.description}</td>
+                                                        <td className="p-4">
+                                                            <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${tr.type === 'revenue' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                                {tr.type === 'revenue' ? 'دخل' : 'مصروف'}
+                                                            </span>
+                                                        </td>
+                                                        <td className={`p-4 font-mono font-bold ${tr.type === 'revenue' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                            {tr.type === 'revenue' ? '+' : '-'}{Number(tr.amount).toLocaleString()}
+                                                        </td>
+                                                        <td className="p-4 text-white/40">{new Date(tr.date).toLocaleDateString('ar-EG')}</td>
+                                                    </tr>
+                                                ))}
+                                                {transactions.length === 0 && (
+                                                    <tr><td colSpan={4} className="p-10 text-center text-white/20 italic">لا توجد عمليات مسجلة حالياً</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Expenses List */}
+                                <div className="glass rounded-[40px] overflow-hidden border border-white/10">
+                                    <div className="p-8 border-b border-white/10">
+                                        <h3 className="font-bold text-lg text-white">سجل المصروفات</h3>
+                                    </div>
+                                    <div className="p-4 space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
+                                        {expenses.map((exp) => (
+                                            <div key={exp.id} className="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center group">
+                                                <div className="flex gap-4 items-center">
+                                                    <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center">
+                                                        <Banknote size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-sm text-white">{exp.title}</h4>
+                                                        <p className="text-[10px] text-white/40">{exp.category} | {new Date(exp.expense_date).toLocaleDateString('ar-EG')}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="font-bold text-red-400">-{exp.amount} ج.م</span>
+                                                    <button onClick={() => deleteExpense(exp.id)} className="opacity-0 group-hover:opacity-100 p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {expenses.length === 0 && (
+                                            <div className="p-10 text-center text-white/20 italic">لم يتم تسجيل أي مصروفات بعد</div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                        </section>
-                    ) : activeTab === 'retail-orders' ? (
-                        <RetailOrdersTab tenantId={data?.tenant.id} />
-                    ) : activeTab === 'marketing' ? (
-                        <MarketingStudio />
+                        </div>
                     ) : (
                         <section className="text-center py-20">
                             <h2 className="text-2xl font-bold mb-4">هذا القسم قيد التطوير</h2>
@@ -1818,6 +2134,238 @@ const SalonDashboard: React.FC = () => {
                     </div>
                 </div>
             )}
+
+
+            {/* Expense Modal */}
+            {showExpenseModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[2000] p-4">
+                    <div className="glass w-full max-w-lg p-8 rounded-2xl border border-white/10 relative">
+                        <button onClick={() => setShowExpenseModal(false)} className="absolute top-4 left-4 text-white/60 hover:text-white"><span className="material-symbols-outlined">close</span></button>
+                        <h3 className="text-2xl font-bold mb-6 text-right">تسجيل مصروفات</h3>
+                        <form onSubmit={handleExpenseSubmit} className="grid gap-4 text-right" dir="rtl">
+                            <div>
+                                <label className="text-sm font-bold text-white/60 block mb-2">البيان (ماذا اشتريت؟)</label>
+                                <input type="text" required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white" value={expenseForm.title} onChange={e => setExpenseForm({ ...expenseForm, title: e.target.value })} placeholder="مثال: فاتورة كهرباء، خامات صبغة..." />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-bold text-white/60 block mb-2">المبلغ</label>
+                                    <input type="number" required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white" value={expenseForm.amount} onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-bold text-white/60 block mb-2">التصنيف</label>
+                                    <select className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white" value={expenseForm.category} onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}>
+                                        <option value="general">عام</option>
+                                        <option value="rent">إيجار</option>
+                                        <option value="salaries">رواتب</option>
+                                        <option value="supplies">خامات وأدوات</option>
+                                        <option value="utility">مرافق (كهرباء/ماء)</option>
+                                        <option value="marketing">تسويق</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-sm font-bold text-white/60 block mb-2">التاريخ</label>
+                                <input type="date" required className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white" value={expenseForm.expense_date} onChange={e => setExpenseForm({ ...expenseForm, expense_date: e.target.value })} />
+                            </div>
+                            <button type="submit" className="w-full bg-green-600 font-bold py-3 rounded-xl mt-4">حفظ المصروف</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Upgrade Modal */}
+            <AnimatePresence>
+                {showUpgradeModal && lockedFeature && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[2000] p-4"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+                            className="glass w-full max-w-md p-8 rounded-[2.5rem] border border-white/10 text-center relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500"></div>
+                            
+                            <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                                <span className="material-symbols-outlined text-amber-500 text-4xl">{lockedFeature.icon}</span>
+                            </div>
+
+                            <h3 className="text-2xl font-bold text-white mb-2">هذه الميزة مدفوعة (PRO)</h3>
+                            <p className="text-white/60 mb-8 leading-relaxed">
+                                ميزة <span className="text-amber-400 font-bold">"{lockedFeature.name}"</span> متاحة فقط في الباقات الاحترافية. قم بترقية باقتك الآن لتفعيل كافة أدوات الذكاء الاصطناعي والتسويق.
+                            </p>
+
+                            <div className="space-y-3">
+                                <button 
+                                    onClick={() => { setShowUpgradeModal(false); setActiveTab('billing'); }}
+                                    className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-black py-4 rounded-2xl shadow-xl shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined">upgrade</span>
+                                    ترقية الباقة الآن
+                                </button>
+                                <button 
+                                    onClick={() => setShowUpgradeModal(false)}
+                                    className="w-full bg-white/5 text-white/40 font-bold py-4 rounded-2xl hover:bg-white/10 transition-all"
+                                >
+                                    ربما لاحقاً
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Onboarding Wizard */}
+            <AnimatePresence>
+                {showOnboarding && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        className="fixed inset-0 bg-[#060608] z-[3000] flex items-center justify-center p-4 overflow-y-auto"
+                    >
+                        <div className="max-w-xl w-full py-12">
+                            <div className="text-center mb-10">
+                                <div className="inline-flex items-center gap-2 bg-violet-500/10 px-4 py-1.5 rounded-full border border-violet-500/20 mb-6">
+                                    <span className="w-2 h-2 bg-violet-500 rounded-full animate-pulse"></span>
+                                    <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest">Salon Setup Wizard</span>
+                                </div>
+                                <h2 className="text-4xl font-black text-white mb-3">مرحباً بك في O2O EG</h2>
+                                <p className="text-white/40">لنقم بإعداد صالونك في دقيقة واحدة لنبدأ العمل فوراً</p>
+                            </div>
+
+                            <div className="flex gap-2 mb-8 justify-center">
+                                {[1, 2, 3].map(step => (
+                                    <div key={step} className={`h-1.5 rounded-full transition-all duration-500 ${onboardingStep >= step ? 'w-12 bg-violet-500' : 'w-4 bg-white/10'}`}></div>
+                                ))}
+                            </div>
+
+                            <form onSubmit={handleOnboardingSubmit} className="glass p-8 rounded-[2rem] border border-white/5 relative overflow-hidden">
+                                {onboardingStep === 1 && (
+                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 text-right">
+                                        <h4 className="text-xl font-bold text-white mb-6">البيانات الأساسية</h4>
+                                        <div>
+                                            <label className="text-xs font-bold text-white/40 block mb-2 uppercase tracking-wider">اسم الصالون</label>
+                                            <input 
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-violet-500" 
+                                                value={onboardingForm.salon_name}
+                                                onChange={e => setOnboardingForm({...onboardingForm, salon_name: e.target.value})}
+                                                placeholder="مثال: لوميير بيوتي سنتر"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-white/40 block mb-2 uppercase tracking-wider">المدينة</label>
+                                            <input 
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-violet-500" 
+                                                value={onboardingForm.city}
+                                                onChange={e => setOnboardingForm({...onboardingForm, city: e.target.value})}
+                                                placeholder="القاهرة، المهندسين..."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-white/40 block mb-2 uppercase tracking-wider">رقم الواتساب للتواصل</label>
+                                            <input 
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-violet-500" 
+                                                value={onboardingForm.whatsapp}
+                                                onChange={e => setOnboardingForm({...onboardingForm, whatsapp: e.target.value})}
+                                                placeholder="010XXXXXXXX"
+                                            />
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setOnboardingStep(2)}
+                                            className="w-full bg-violet-600 py-4 rounded-2xl font-bold text-white hover:bg-violet-700 transition-all"
+                                        >
+                                            التالي
+                                        </button>
+                                    </motion.div>
+                                )}
+
+                                {onboardingStep === 2 && (
+                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 text-right">
+                                        <h4 className="text-xl font-bold text-white mb-6">ساعات العمل</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs font-bold text-white/40 block mb-2 uppercase tracking-wider">من الساعة</label>
+                                                <input 
+                                                    type="time"
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-violet-500" 
+                                                    value={onboardingForm.opening_time}
+                                                    onChange={e => setOnboardingForm({...onboardingForm, opening_time: e.target.value})}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-white/40 block mb-2 uppercase tracking-wider">إلى الساعة</label>
+                                                <input 
+                                                    type="time"
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-violet-500" 
+                                                    value={onboardingForm.closing_time}
+                                                    onChange={e => setOnboardingForm({...onboardingForm, closing_time: e.target.value})}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <button 
+                                                type="button"
+                                                onClick={() => setOnboardingStep(3)}
+                                                className="flex-1 bg-violet-600 py-4 rounded-2xl font-bold text-white hover:bg-violet-700 transition-all"
+                                            >
+                                                التالي
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setOnboardingStep(1)}
+                                                className="px-8 bg-white/5 py-4 rounded-2xl font-bold text-white/60 hover:bg-white/10 transition-all"
+                                            >
+                                                رجوع
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {onboardingStep === 3 && (
+                                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 text-right">
+                                        <h4 className="text-xl font-bold text-white mb-6">الخطوة الأخيرة</h4>
+                                        <div>
+                                            <label className="text-xs font-bold text-white/40 block mb-2 uppercase tracking-wider">أهم خدمة تقدمها</label>
+                                            <input 
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-violet-500" 
+                                                value={onboardingForm.first_service}
+                                                onChange={e => setOnboardingForm({...onboardingForm, first_service: e.target.value})}
+                                                placeholder="مثال: سشوار وبيبي ليس"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-white/40 block mb-2 uppercase tracking-wider">اسم مصفف شعر (موظف)</label>
+                                            <input 
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-violet-500" 
+                                                value={onboardingForm.first_staff}
+                                                onChange={e => setOnboardingForm({...onboardingForm, first_staff: e.target.value})}
+                                                placeholder="مثال: أحمد خليل"
+                                            />
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <button 
+                                                type="submit"
+                                                disabled={isSubmitting}
+                                                className="flex-1 bg-gradient-to-r from-violet-600 to-pink-600 py-4 rounded-2xl font-bold text-white hover:scale-105 active:scale-95 transition-all shadow-xl shadow-violet-600/20 disabled:opacity-50"
+                                            >
+                                                {isSubmitting ? 'جاري الحفظ...' : 'ابدأ استخدام المنصة'}
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setOnboardingStep(2)}
+                                                className="px-8 bg-white/5 py-4 rounded-2xl font-bold text-white/60 hover:bg-white/10 transition-all"
+                                            >
+                                                رجوع
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </form>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

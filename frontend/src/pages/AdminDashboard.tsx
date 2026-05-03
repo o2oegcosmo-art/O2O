@@ -87,6 +87,7 @@ interface Plan {
     name: string;
     price: number;
     description: string;
+    services?: { id: string, name: string }[];
 }
 
 interface SupportTicket {
@@ -155,6 +156,7 @@ const AdminDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     const [activeTab, setActiveTab] = useState<TabType>('overview');
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
     // Modals & Form States
     const [showServiceModal, setShowServiceModal] = useState(false);
@@ -172,7 +174,7 @@ const AdminDashboard: React.FC = () => {
     const [productStats, setProductStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
 
     const [articleForm, setArticleForm] = useState({ title: '', category: 'أخبار الذكاء الاصطناعي', content: '', image: '', author: 'إدارة O2OEG' });
-    const [planForm, setPlanForm] = useState({ name: '', price: 0, description: '' });
+    const [planForm, setPlanForm] = useState({ name: '', price: 0, description: '', services: [] as string[] });
 
     const didFetch = useRef(false);
 
@@ -226,10 +228,10 @@ const AdminDashboard: React.FC = () => {
         }
     }, [fetchData]);
 
-    const handleToggleService = useCallback(async (tenantId: string, serviceId: string, isCurrentlyEnabled: boolean) => {
+    const handleToggleService = useCallback(async (tenantId: string, serviceSlug: string, isCurrentlyEnabled: boolean) => {
         try {
             const action = isCurrentlyEnabled ? 'disable' : 'enable';
-            await api.post('/admin/tenant-services/toggle', { tenant_id: tenantId, service_id: serviceId, action });
+            await api.post('/admin/tenant-services/toggle', { tenant_id: tenantId, service_slug: serviceSlug, action });
             toast.success(action === 'enable' ? 'تم تفعيل الخدمة' : 'تم تعطيل الخدمة');
             const res = await api.get('/admin/tenant-services');
             const updatedTenants = Array.isArray(res.data) ? res.data : (res.data.data || []);
@@ -345,14 +347,27 @@ const AdminDashboard: React.FC = () => {
         <div className="min-h-screen bg-[#0A0A0C] text-white flex flex-col md:flex-row rtl font-sans" dir="rtl">
             <Toaster position="bottom-right" />
 
+            {/* Mobile Sidebar Overlay */}
+            {isMobileSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-full md:w-72 bg-[#121214] border-l border-white/5 p-6 flex flex-col gap-8 sticky top-0 h-screen overflow-y-auto z-50">
-                <div onClick={() => navigate('/')} className="flex items-center gap-3 px-2 cursor-pointer hover:opacity-80 transition-opacity">
-                    <div className="w-10 h-10 bg-gradient-to-br from-fuchsia-600 to-cyan-600 rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-fuchsia-600/20">O</div>
-                    <div>
-                        <h1 className="font-black tracking-tight text-lg">O2OEG Control</h1>
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest">Super Admin v2.0</p>
+            <aside className={`fixed inset-y-0 right-0 w-72 bg-[#121214] border-l border-white/5 p-6 flex flex-col gap-8 h-screen overflow-y-auto z-50 transition-transform duration-300 md:static md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <div onClick={() => navigate('/')} className="flex items-center justify-between gap-3 px-2 cursor-pointer hover:opacity-80 transition-opacity">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-fuchsia-600 to-cyan-600 rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-fuchsia-600/20">O</div>
+                        <div>
+                            <h1 className="font-black tracking-tight text-lg">O2OEG Control</h1>
+                            <p className="text-[10px] text-white/40 uppercase tracking-widest">Super Admin v2.0</p>
+                        </div>
                     </div>
+                    <button onClick={() => setIsMobileSidebarOpen(false)} className="md:hidden text-white/50 hover:text-white">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
                 </div>
 
                 <nav className="flex flex-col gap-1">
@@ -370,7 +385,7 @@ const AdminDashboard: React.FC = () => {
                         { id: 'products', label: 'مخزن المنتجات المركزي', icon: Package },
                         { id: 'affiliates', label: 'إدارة المسوقين', icon: UserCheck },
                     ].map((item) => (
-                        <button key={item.id} onClick={() => setActiveTab(item.id as TabType)} className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${activeTab === item.id ? 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-600/20' : 'text-white/40 hover:bg-white/5 hover:text-white'}`}>
+                        <button key={item.id} onClick={() => { setActiveTab(item.id as TabType); setIsMobileSidebarOpen(false); }} className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${activeTab === item.id ? 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-600/20' : 'text-white/40 hover:bg-white/5 hover:text-white'}`}>
                             <item.icon size={18} />
                             <span className="text-sm font-bold">{item.label}</span>
                         </button>
@@ -390,7 +405,19 @@ const AdminDashboard: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-6 md:p-12 overflow-y-auto relative bg-[#0A0A0C]">
+            <main className="flex-1 overflow-y-auto relative bg-[#0A0A0C] h-screen w-full">
+                {/* Mobile Header */}
+                <div className="md:hidden flex items-center justify-between p-4 bg-[#121214] border-b border-white/5 sticky top-0 z-30">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-fuchsia-600 to-cyan-600 rounded-lg flex items-center justify-center font-black text-sm">O</div>
+                        <h1 className="font-black text-sm">O2OEG Control</h1>
+                    </div>
+                    <button onClick={() => setIsMobileSidebarOpen(true)} className="p-2 bg-white/5 rounded-lg text-white">
+                        <span className="material-symbols-outlined">menu</span>
+                    </button>
+                </div>
+
+                <div className="p-6 md:p-12">
                 <AnimatePresence mode="wait">
                     <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="max-w-6xl mx-auto space-y-8">
 
@@ -504,21 +531,23 @@ const AdminDashboard: React.FC = () => {
                                                             { slug: 'crm', name: 'CRM', color: 'blue' },
                                                             { slug: 'will-ai', name: 'Will AI', color: 'fuchsia' },
                                                             { slug: 'retail-store', name: 'المتجر', color: 'amber' },
+                                                            { slug: 'marketing-studio', name: 'التسويق', color: 'pink' },
                                                             { slug: 'ads-events', name: 'الفعاليات', color: 'green' },
                                                         ].map(ps => {
-                                                            const isEnabled = (salon.services || []).some(s => s.slug === ps.slug);
+                                                            const isServiceEnabled = (salon.services || []).some(s => s.slug === ps.slug);
                                                             const colorMap: Record<string, string> = {
-                                                                cyan: isEnabled ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' : 'bg-white/3 text-white/20 border-white/5',
-                                                                blue: isEnabled ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : 'bg-white/3 text-white/20 border-white/5',
-                                                                fuchsia: isEnabled ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30' : 'bg-white/3 text-white/20 border-white/5',
-                                                                amber: isEnabled ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-white/3 text-white/20 border-white/5',
-                                                                green: isEnabled ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-white/3 text-white/20 border-white/5',
+                                                                cyan: isServiceEnabled ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' : 'bg-white/3 text-white/20 border-white/5',
+                                                                blue: isServiceEnabled ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : 'bg-white/3 text-white/20 border-white/5',
+                                                                fuchsia: isServiceEnabled ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30' : 'bg-white/3 text-white/20 border-white/5',
+                                                                amber: isServiceEnabled ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-white/3 text-white/20 border-white/5',
+                                                                pink: isServiceEnabled ? 'bg-pink-500/10 text-pink-400 border-pink-500/30' : 'bg-white/3 text-white/20 border-white/5',
+                                                                green: isServiceEnabled ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-white/3 text-white/20 border-white/5',
                                                             };
                                                             return (
                                                                 <div key={ps.slug} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold ${colorMap[ps.color]} transition-all`}>
-                                                                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isEnabled ? 'bg-current' : 'bg-white/10'}`}></span>
+                                                                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isServiceEnabled ? 'bg-current' : 'bg-white/10'}`}></span>
                                                                     {ps.name}
-                                                                    {isEnabled && <span className="mr-auto text-[8px] opacity-60">✓</span>}
+                                                                    {isServiceEnabled && <span className="mr-auto text-[8px] opacity-60">✓</span>}
                                                                 </div>
                                                             );
                                                         })}
@@ -783,10 +812,28 @@ const AdminDashboard: React.FC = () => {
 
                         {activeTab === 'plans' && (
                             <div className="space-y-8">
-                                <header className="flex justify-between items-center"><h2 className="text-2xl font-bold">إدارة الباقات</h2><button onClick={() => { setEditingPlan(null); setPlanForm({ name: '', price: 0, description: '' }); setShowPlanModal(true); }} className="bg-white text-black font-black px-6 py-3 rounded-2xl text-xs">+ باقة جديدة</button></header>
+                                <header className="flex justify-between items-center"><h2 className="text-2xl font-bold">إدارة الباقات</h2><button onClick={() => { setEditingPlan(null); setPlanForm({ name: '', price: 0, description: '', services: [] }); setShowPlanModal(true); }} className="bg-white text-black font-black px-6 py-3 rounded-2xl text-xs">+ باقة جديدة</button></header>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     {plans.map(plan => (
-                                        <div key={plan.id} className="bg-[#121214] p-8 rounded-[40px] border border-white/5 group relative"><h3 className="text-xl font-bold mb-2">{plan.name}</h3><div className="text-3xl font-black text-fuchsia-500 mb-6">{plan.price} <span className="text-sm text-white/20">ج.م</span></div><button onClick={() => { setEditingPlan(plan); setPlanForm({ name: plan.name, price: plan.price, description: plan.description }); setShowPlanModal(true); }} className="w-full py-3 bg-white/5 rounded-2xl text-xs font-bold border border-white/10 group-hover:bg-white group-hover:text-black transition-all">تعديل</button></div>
+                                        <div key={plan.id} className="bg-[#121214] p-8 rounded-[40px] border border-white/5 group relative">
+                                            <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                                            <div className="text-3xl font-black text-fuchsia-500 mb-2">{plan.price} <span className="text-sm text-white/20">ج.م</span></div>
+                                            <div className="flex flex-wrap gap-1 mb-6">
+                                                {plan.services?.map(s => (
+                                                    <span key={s.id} className="text-[8px] bg-white/5 px-2 py-0.5 rounded-full text-white/40">{s.name}</span>
+                                                ))}
+                                            </div>
+                                            <button onClick={() => { 
+                                                setEditingPlan(plan); 
+                                                setPlanForm({ 
+                                                    name: plan.name, 
+                                                    price: plan.price, 
+                                                    description: plan.description,
+                                                    services: plan.services?.map(s => s.id) || []
+                                                }); 
+                                                setShowPlanModal(true); 
+                                            }} className="w-full py-3 bg-white/5 rounded-2xl text-xs font-bold border border-white/10 group-hover:bg-white group-hover:text-black transition-all">تعديل</button>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -1053,6 +1100,7 @@ const AdminDashboard: React.FC = () => {
 
 
                 </AnimatePresence>
+                </div>
             </main>
 
             {/* Modals */}
@@ -1060,18 +1108,18 @@ const AdminDashboard: React.FC = () => {
                 {showServiceModal && selectedTenant && (
                     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowServiceModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-lg bg-[#121214] border border-white/10 rounded-[40px] p-8 shadow-2xl">
-                            <button onClick={() => setShowServiceModal(false)} className="absolute top-6 left-6 text-white/20 hover:text-white transition-all"><X size={20} /></button>
-                            <h3 className="text-2xl font-bold mb-6 text-right">تعديل خدمات {selectedTenant.name}</h3>
-                            <div className="space-y-4">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-3xl bg-[#121214] border border-white/10 rounded-[40px] p-10 shadow-2xl">
+                            <button onClick={() => setShowServiceModal(false)} className="absolute top-8 left-8 text-white/20 hover:text-white transition-all"><X size={24} /></button>
+                            <h3 className="text-3xl font-black mb-8 text-right">تعديل موديولات {selectedTenant.name}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                                 {allServices.length === 0 ? (
-                                    <p className="text-white/40 text-center py-4">جاري تحميل قائمة الخدمات السيادية...</p>
+                                    <p className="text-white/40 text-center py-4 col-span-2">جاري تحميل قائمة الخدمات السيادية...</p>
                                 ) : allServices.map(service => {
                                     const isEnabled = (selectedTenant.services || []).some(s => s.slug === service.slug);
                                     return (
-                                        <div key={service.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                        <div key={service.id} className="flex items-center justify-between p-5 bg-white/5 rounded-3xl border border-white/5 hover:border-white/10 transition-all">
                                             <span className="font-bold text-sm">{service.name}</span>
-                                            <button onClick={() => handleToggleService(selectedTenant.id, service.id, isEnabled)} className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${isEnabled ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>{isEnabled ? 'تعطيل' : 'تفعيل'}</button>
+                                            <button onClick={() => handleToggleService(selectedTenant.id, service.slug, isEnabled)} className={`px-6 py-2.5 rounded-2xl text-[10px] font-black transition-all shadow-lg ${isEnabled ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-green-500 text-black shadow-green-500/20'}`}>{isEnabled ? 'تعطيل' : 'تفعيل'}</button>
                                         </div>
                                     );
                                 })}
@@ -1103,12 +1151,35 @@ const AdminDashboard: React.FC = () => {
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-md bg-[#121214] border border-white/10 rounded-[40px] p-8">
                             <button onClick={() => setShowPlanModal(false)} className="absolute top-6 left-6 text-white/20 hover:text-white transition-all"><X size={20} /></button>
                             <h3 className="text-2xl font-bold mb-6 text-right">{editingPlan ? 'تعديل باقة' : 'إضافة باقة'}</h3>
-                            <form onSubmit={handlePlanSubmit} className="space-y-4">
-                                <input required placeholder="اسم الباقة" value={planForm.name} onChange={e => setPlanForm({ ...planForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-cyan-500" />
-                                <input type="number" required placeholder="السعر" value={planForm.price} onChange={e => setPlanForm({ ...planForm, price: Number(e.target.value) })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-cyan-500" />
-                                <textarea placeholder="الوصف" value={planForm.description} onChange={e => setPlanForm({ ...planForm, description: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 h-32 focus:outline-none focus:border-cyan-500" />
-                                <button type="submit" className="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-cyan-400 transition-all">حفظ</button>
-                            </form>
+                             <form onSubmit={handlePlanSubmit} className="space-y-4">
+                                 <input required placeholder="اسم الباقة" value={planForm.name} onChange={e => setPlanForm({ ...planForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-cyan-500" />
+                                 <input type="number" required placeholder="السعر" value={planForm.price} onChange={e => setPlanForm({ ...planForm, price: Number(e.target.value) })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-cyan-500" />
+                                 <textarea placeholder="الوصف" value={planForm.description} onChange={e => setPlanForm({ ...planForm, description: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 h-24 focus:outline-none focus:border-cyan-500" />
+                                 
+                                 <div className="space-y-3">
+                                     <label className="text-xs font-bold text-white/40 block mr-2">الموديولات المتاحة في هذه الباقة:</label>
+                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                                         {allServices.map(service => (
+                                             <label key={service.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 cursor-pointer hover:bg-white/10 transition-all">
+                                                 <input 
+                                                     type="checkbox" 
+                                                     className="w-5 h-5 rounded accent-cyan-500" 
+                                                     checked={planForm.services.includes(service.id)}
+                                                     onChange={e => {
+                                                         const ids = e.target.checked 
+                                                             ? [...planForm.services, service.id]
+                                                             : planForm.services.filter(id => id !== service.id);
+                                                         setPlanForm({ ...planForm, services: ids });
+                                                     }}
+                                                 />
+                                                 <span className="text-sm">{service.name}</span>
+                                             </label>
+                                         ))}
+                                     </div>
+                                 </div>
+
+                                 <button type="submit" className="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-cyan-400 transition-all">حفظ الباقة</button>
+                             </form>
                         </motion.div>
                     </div>
                 )}

@@ -35,22 +35,23 @@ class TenantServiceController extends Controller
     {
         $request->validate([
             'tenant_id' => 'required|exists:tenants,id',
-            'service_id' => 'required|exists:services,id',
+            'service_slug' => 'required|string',
             'action' => 'required|in:enable,disable'
         ]);
 
         $tenant = Tenant::findOrFail($request->tenant_id);
+        $service = Service::where('slug', $request->service_slug)->firstOrFail();
         
         if ($request->action === 'enable') {
             // تفعيل الخدمة (إضافة للسجل)
-            $tenant->services()->syncWithoutDetaching([$request->service_id => [
+            $tenant->services()->syncWithoutDetaching([$service->id => [
                 'status' => 'active',
                 'activated_at' => now()
             ]]);
             $message = 'تم تفعيل الخدمة للمشترك بنجاح';
         } else {
             // تعطيل الخدمة
-            $tenant->services()->detach($request->service_id);
+            $tenant->services()->detach($service->id);
             $message = 'تم تعطيل الخدمة للمشترك';
         }
 
