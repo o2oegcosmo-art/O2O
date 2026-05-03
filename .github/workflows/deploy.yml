@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Build Frontend
+      - name: Build Frontend Locally
         run: |
           cd frontend
           npm install
@@ -30,25 +30,40 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # اذهب لمسار المشروع الصحيح بناءً على خطأ السيرفر
+            # الدخول للمجلد الرئيسي
             cd /var/www/u525164227
             
-            # تطهير كامل للملفات وجلب النسخة النظيفة
+            # جلب الكود الجديد
             git fetch --all
             git reset --hard origin/main
             git clean -fd
             
-            # تحديث الباك إند
-            cd backend
-            composer install --no-dev --optimize-autoloader
-            php artisan migrate:fresh --seed --force
-            php artisan optimize
+            # تحديث الباك إند (سواء كان في المجلد الرئيسي أو في مجلد backend)
+            if [ -d "backend" ]; then
+                cd backend
+                composer install --no-dev --optimize-autoloader
+                php artisan migrate --force
+                php artisan optimize:clear
+                cd ..
+            else
+                composer install --no-dev --optimize-autoloader
+                php artisan migrate --force
+                php artisan optimize:clear
+            fi
             
-            # تحديث الفرونت إند ونقل الملفات
-            cd ../frontend
-            rm -rf dist
+            # تحديث وبناء الفرونت إند
+            cd frontend
             npm install
             npm run build
-            cp -r dist/* ../backend/public/
+            
+            # الحل الجذري: نسخ الملفات إلى كافة المجلدات العامة المحتملة
+            # 1. المجلد العام الرئيسي (المذكور في الخطأ)
+            mkdir -p ../public
+            cp -r dist/* ../public/
+            
+            # 2. مجلد public داخل backend (إذا وجد)
+            if [ -d "../backend/public" ]; then
+                cp -r dist/* ../backend/public/
+            fi
             
             echo "🚀 O2OEG Platform has been REBORN and is now LIVE!"

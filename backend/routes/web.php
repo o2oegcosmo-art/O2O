@@ -3,7 +3,20 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return file_get_contents(public_path('index.html'));
+    $paths = [
+        public_path('index.html'),
+        base_path('../public/index.html'),
+        base_path('public/index.html'),
+        '/var/www/u525164227/public/index.html'
+    ];
+
+    foreach ($paths as $path) {
+        if (file_exists($path)) {
+            return file_get_contents($path);
+        }
+    }
+    
+    return response("Frontend not found. Please check deployment.", 404);
 });
 
 // الحل القاتل: دعم الـ POST والـ GET في مسار الـ Web وتوجيهه للمحرك الصحيح
@@ -14,7 +27,23 @@ Route::get('/login-status', function() {
     return response()->json(['status' => 'online', 'message' => 'Login system is active.']);
 });
 
-// Catch-all route to serve React application for any unmatched routes
+// المحرك الذكي لتحميل الواجهة من أي مسار متاح لجميع الروابط
 Route::get('/{any}', function () {
-    return file_get_contents(public_path('index.html'));
+    $paths = [
+        public_path('index.html'),
+        base_path('../public/index.html'),
+        base_path('public/index.html'),
+        '/var/www/u525164227/public/index.html'
+    ];
+
+    foreach ($paths as $path) {
+        if (file_exists($path)) {
+            return file_get_contents($path);
+        }
+    }
+
+    return response()->json([
+        'error' => 'Frontend build not found',
+        'checked_paths' => $paths
+    ], 404);
 })->where('any', '.*');
