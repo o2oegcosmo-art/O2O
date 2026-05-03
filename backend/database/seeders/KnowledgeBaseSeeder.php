@@ -9,17 +9,17 @@ class KnowledgeBaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. كتيبات منتجات لوريال (L'Oreal Product Manuals)
+        // 1. كتيبات منتجات 7Days pro (7Days pro Product Manuals)
         KnowledgeBase::create([
-            'title' => 'دليل صبغات L\'Oreal Majirel',
+            'title' => 'دليل صبغات 7Days pro Majirel',
             'category' => 'products',
-            'content' => "صبغة Majirel هي الصبغة الدائمة الأيقونية من لوريال. 
+            'content' => "صبغة Majirel هي الصبغة الدائمة الأيقونية من 7Days pro. 
             المكونات النشطة: Ionène G و Incell. 
             تغطية الشعر الأبيض: تصل إلى 100%. 
             نسبة الخلط: 1:1.5 (مثلاً 50 مل صبغة مع 75 مل أكسيدان). 
             وقت المعالجة: 35 دقيقة. 
             نصيحة البيع: ابدأ دائماً بتشخيص فروة الرأس واستخدم شامبو Metal Detox قبل التلوين لضمان أفضل نتيجة.",
-            'metadata' => ['brand' => 'L\'Oreal', 'line' => 'Majirel']
+            'metadata' => ['brand' => '7Days pro', 'line' => 'Majirel']
         ]);
 
         KnowledgeBase::create([

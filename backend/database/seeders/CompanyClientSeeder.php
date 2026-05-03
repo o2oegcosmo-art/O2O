@@ -23,7 +23,7 @@ class CompanyClientSeeder extends Seeder
         $tenant = Tenant::firstOrCreate(
             ['domain' => 'loreal.o2oeg.local'],
             [
-                'name'              => "L'Oreal Professionnel EG",
+                'name'              => "7Days pro",
                 'phone'             => '01100000002',
                 'address'           => 'مدينة نصر، القاهرة',
                 'status'            => 'active',
@@ -72,6 +72,6 @@ class CompanyClientSeeder extends Seeder
         $this->command->info("✅ تم إنشاء حساب الشركة بنجاح!");
         $this->command->info("   📞 رقم الهاتف: 01100000002");
         $this->command->info("   🔑 كلمة المرور: password123");
-        $this->command->info("   🏢 اسم الشركة: L'Oreal Professionnel EG");
+        $this->command->info("   🏢 اسم الشركة: 7Days pro");
     }
 }
