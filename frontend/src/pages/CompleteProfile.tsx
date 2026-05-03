@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Store, Building2, Users, CheckCircle, ChevronRight, UploadCloud } from 'lucide-react';
+import { Store, Building2, Users, CheckCircle, ChevronRight } from 'lucide-react';
 import api from '../api/config';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -77,7 +77,7 @@ const CompleteProfile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0A0A0C] text-white flex flex-col items-center justify-center p-4 md:p-8" dir="rtl">
-      <Toaster position="top-center" theme="dark" />
+      <Toaster position="top-center" />
       
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-2xl bg-[#121214] border border-white/10 rounded-[40px] p-8 md:p-12 shadow-2xl relative overflow-hidden">
         {/* Glow Effects */}
