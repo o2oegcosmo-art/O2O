@@ -51,3 +51,4 @@ class BookingPendingPayment extends Notification implements ShouldQueue
         ];
     }
 }
+

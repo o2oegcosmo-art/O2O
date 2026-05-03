@@ -41,3 +41,4 @@ class RetailOrder extends Model
         return 'ORD-' . date('Y') . '-' . str_pad($count, 5, '0', STR_PAD_LEFT);
     }
 }
+

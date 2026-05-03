@@ -25,3 +25,4 @@ class CrmStylistCertification extends Model
         return $this->belongsTo(CrmStylist::class, 'crm_stylist_id');
     }
 }
+

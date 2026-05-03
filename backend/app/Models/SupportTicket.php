@@ -21,3 +21,4 @@ class SupportTicket extends \Illuminate\Database\Eloquent\Model
         return $this->belongsTo(Tenant::class);
     }
 }
+

@@ -18,3 +18,4 @@ class SocialPost extends Model
     public function tenant() { return $this->belongsTo(Tenant::class); }
     public function logs() { return $this->hasMany(SocialPostLog::class, 'post_id'); }
 }
+

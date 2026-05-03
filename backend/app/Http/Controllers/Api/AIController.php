@@ -478,7 +478,7 @@ class AIController extends Controller
                 $ollamaResponse = \Illuminate\Support\Facades\Http::withoutVerifying()
                     ->timeout(180) // CPU-only server needs more time for large prompts
                     ->post("http://72.62.182.106:11434/api/generate", [
-                        'model' => 'llama3.2:3b',
+                        'model' => 'qwen2.5:7b',
                         'prompt' => $prompt . "\n\nImportant: Respond ONLY with a valid JSON object matching the requested format.",
                         'stream' => false,
                         'format' => 'json'
@@ -656,3 +656,4 @@ class AIController extends Controller
         return (json_last_error() === JSON_ERROR_NONE) ? $decoded : null;
     }
 }
+

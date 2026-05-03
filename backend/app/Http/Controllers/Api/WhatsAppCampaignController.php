@@ -119,3 +119,4 @@ class WhatsAppCampaignController extends Controller
         return response()->json($campaign);
     }
 }
+

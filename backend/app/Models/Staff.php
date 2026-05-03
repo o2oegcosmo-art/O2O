@@ -41,3 +41,4 @@ class Staff extends Model
         return $this->hasMany(CrmOpportunity::class, 'assigned_rep_id');
     }
 }
+

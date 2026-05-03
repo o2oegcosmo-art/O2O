@@ -88,3 +88,4 @@ class AISecurityService
         return $message;
     }
 }
+

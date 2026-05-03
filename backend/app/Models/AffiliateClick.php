@@ -22,3 +22,4 @@ class AffiliateClick extends Model
         return $this->belongsTo(AffiliateProfile::class, 'affiliate_profile_id');
     }
 }
+

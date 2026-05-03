@@ -18,3 +18,4 @@ class WhatsappMessage extends Model
     public function campaign() { return $this->belongsTo(WhatsappCampaign::class, 'campaign_id'); }
     public function customer() { return $this->belongsTo(Customer::class); }
 }
+

@@ -42,3 +42,4 @@ class VerifyWhatsAppWebhook
         return $next($request);
     }
 }
+

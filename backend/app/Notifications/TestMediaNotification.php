@@ -29,3 +29,4 @@ class TestMediaNotification extends Notification
         ];
     }
 }
+

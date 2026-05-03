@@ -12,3 +12,4 @@ class MediaAsset extends Model
 
     public function tenant() { return $this->belongsTo(Tenant::class); }
 }
+

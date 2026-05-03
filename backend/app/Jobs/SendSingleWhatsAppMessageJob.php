@@ -89,3 +89,4 @@ class SendSingleWhatsAppMessageJob implements ShouldQueue
         }
     }
 }
+

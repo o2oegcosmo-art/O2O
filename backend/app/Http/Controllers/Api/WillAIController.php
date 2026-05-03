@@ -199,7 +199,7 @@ class WillAIController extends Controller
                     $ollamaResponse = Http::withoutVerifying()
                         ->timeout(60)
                         ->post("http://72.62.182.106:11434/api/generate", [
-                            'model' => 'llama3',
+                            'model' => 'qwen2.5:7b',
                             'prompt' => $prompt . "\n\nImportant: Respond ONLY with a valid JSON object matching the requested format.",
                             'stream' => false,
                             'format' => 'json'
@@ -274,3 +274,4 @@ class WillAIController extends Controller
         return (json_last_error() === JSON_ERROR_NONE) ? $decoded : null;
     }
 }
+

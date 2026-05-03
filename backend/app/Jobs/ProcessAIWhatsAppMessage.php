@@ -60,3 +60,4 @@ class ProcessAIWhatsAppMessage implements ShouldQueue
         }
     }
 }
+

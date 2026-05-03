@@ -61,3 +61,4 @@ class DiscoveryController extends Controller
         return response()->json($salons);
     }
 }
+

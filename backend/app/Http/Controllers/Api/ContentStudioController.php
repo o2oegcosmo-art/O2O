@@ -132,3 +132,4 @@ class ContentStudioController extends Controller
         }
     }
 }
+

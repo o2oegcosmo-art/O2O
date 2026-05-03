@@ -61,3 +61,4 @@ class Service extends Model
                     ->withTimestamps();
     }
 }
+

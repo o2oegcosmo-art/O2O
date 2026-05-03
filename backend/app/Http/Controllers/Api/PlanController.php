@@ -68,3 +68,4 @@ class PlanController extends Controller
         return response()->json(['success' => true]);
     }
 }
+

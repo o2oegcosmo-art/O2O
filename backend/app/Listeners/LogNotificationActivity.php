@@ -33,3 +33,4 @@ class LogNotificationActivity implements ShouldQueue
         Log::channel('stack')->info('Booking notification activity', $context);
     }
 }
+

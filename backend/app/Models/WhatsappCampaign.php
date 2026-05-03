@@ -17,3 +17,4 @@ class WhatsappCampaign extends Model
     public function tenant() { return $this->belongsTo(Tenant::class); }
     public function messages() { return $this->hasMany(WhatsappMessage::class, 'campaign_id'); }
 }
+

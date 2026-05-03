@@ -161,3 +161,4 @@ class AffiliateController extends Controller
         return response()->json(['message' => 'Status updated', 'status' => $profile->status]);
     }
 }
+

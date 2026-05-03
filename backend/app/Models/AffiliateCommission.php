@@ -34,3 +34,4 @@ class AffiliateCommission extends Model
         return $this->belongsTo(Subscription::class);
     }
 }
+

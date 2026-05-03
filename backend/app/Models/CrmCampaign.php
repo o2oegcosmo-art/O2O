@@ -24,3 +24,4 @@ class CrmCampaign extends Model
         return $this->belongsTo(Tenant::class);
     }
 }
+

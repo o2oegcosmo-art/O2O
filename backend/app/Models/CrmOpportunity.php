@@ -34,3 +34,4 @@ class CrmOpportunity extends Model
         return $this->belongsTo(Staff::class, 'assigned_rep_id');
     }
 }
+

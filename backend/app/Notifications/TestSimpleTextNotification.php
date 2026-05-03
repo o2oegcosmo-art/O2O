@@ -25,3 +25,4 @@ class TestSimpleTextNotification extends Notification
         return $this->message;
     }
 }
+

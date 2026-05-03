@@ -188,3 +188,4 @@ class CrmOrderController extends Controller
         return response()->json(['success' => true, 'product' => $product]);
     }
 }
+

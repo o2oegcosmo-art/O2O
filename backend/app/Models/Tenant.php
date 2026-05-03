@@ -144,3 +144,4 @@ class Tenant extends Model
         return $this->belongsTo(AffiliateProfile::class, 'referred_by');
     }
 }
+

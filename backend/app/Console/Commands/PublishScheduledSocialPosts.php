@@ -25,3 +25,4 @@ class PublishScheduledSocialPosts extends Command
         $this->info("Finished publishing " . $posts->count() . " scheduled posts.");
     }
 }
+

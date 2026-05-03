@@ -19,3 +19,4 @@ class Lead extends Model
         'ref_code',
     ];
 }
+

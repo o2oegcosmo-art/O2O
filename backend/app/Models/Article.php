@@ -44,3 +44,4 @@ class Article extends Model
         return $this->belongsTo(Tenant::class);
     }
 }
+

@@ -31,3 +31,4 @@ class CrmVisit extends Model
         return $this->belongsTo(CrmClient::class, 'crm_client_id');
     }
 }
+

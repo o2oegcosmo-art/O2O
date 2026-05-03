@@ -75,3 +75,4 @@ class ProductCatalogController extends Controller
         ]);
     }
 }
+

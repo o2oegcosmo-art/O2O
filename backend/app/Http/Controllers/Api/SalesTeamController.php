@@ -103,3 +103,4 @@ class SalesTeamController extends Controller
         return $earthRadius * $c;
     }
 }
+

@@ -21,3 +21,4 @@ class BookingStatusUpdated
         $this->newStatus = $newStatus;
     }
 }
+

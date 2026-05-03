@@ -8,3 +8,4 @@ class Campaign extends Model
 {
     //
 }
+

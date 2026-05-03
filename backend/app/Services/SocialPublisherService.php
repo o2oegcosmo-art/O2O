@@ -144,3 +144,4 @@ class SocialPublisherService
         $post->update(['status' => 'failed']);
     }
 }
+

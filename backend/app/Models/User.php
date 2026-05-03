@@ -45,3 +45,4 @@ class User extends Authenticatable
         return $this->hasOne(AffiliateProfile::class);
     }
 }
+

@@ -33,3 +33,4 @@ class CrmOrder extends Model
         return $this->belongsTo(Tenant::class);
     }
 }
+

@@ -64,3 +64,4 @@ class CrmClient extends Model
         return $this->hasMany(CrmStylist::class);
     }
 }
+

@@ -65,3 +65,4 @@ class CrmReportController extends Controller
         return round(($won / $total) * 100, 1);
     }
 }
+

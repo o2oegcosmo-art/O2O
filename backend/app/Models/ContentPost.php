@@ -35,3 +35,4 @@ class ContentPost extends Model
         return $this->belongsTo(ContentCalendar::class, 'calendar_id');
     }
 }
+

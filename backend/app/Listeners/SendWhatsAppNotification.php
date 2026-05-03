@@ -58,3 +58,4 @@ class SendWhatsAppNotification implements ShouldQueue
         ]);
     }
 }
+

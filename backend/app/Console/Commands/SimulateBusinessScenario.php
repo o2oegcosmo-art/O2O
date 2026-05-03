@@ -155,3 +155,4 @@ class SimulateBusinessScenario extends Command
         $this->info('✅ Simulation Completed Successfully!');
     }
 }
+

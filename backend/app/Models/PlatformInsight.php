@@ -22,3 +22,4 @@ class PlatformInsight extends Model
         'significance_score' => 'float'
     ];
 }
+

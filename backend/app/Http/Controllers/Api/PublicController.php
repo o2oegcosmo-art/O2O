@@ -213,3 +213,4 @@ class PublicController extends Controller
         return response()->json(['success' => true, 'response' => 'أهلاً بك يا فندم! نعتذر، المحرك مشغول حالياً، هل يمكنني مساعدتك في شيء آخر؟']);
     }
 }
+

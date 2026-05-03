@@ -64,3 +64,4 @@ class RetailOrderController extends Controller
         return response()->json(['success' => true, 'stats' => $stats]);
     }
 }
+

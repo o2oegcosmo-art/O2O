@@ -40,3 +40,4 @@ class AffiliateProfile extends Model
         return $this->hasMany(Tenant::class, 'referred_by');
     }
 }
+

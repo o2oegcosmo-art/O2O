@@ -26,3 +26,4 @@ class ContentCalendar extends Model
         return $this->hasMany(ContentPost::class, 'calendar_id');
     }
 }
+

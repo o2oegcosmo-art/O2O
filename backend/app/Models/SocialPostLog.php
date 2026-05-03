@@ -16,3 +16,4 @@ class SocialPostLog extends Model
 
     public function post() { return $this->belongsTo(SocialPost::class, 'post_id'); }
 }
+

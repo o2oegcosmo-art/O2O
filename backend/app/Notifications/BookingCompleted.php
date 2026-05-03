@@ -39,3 +39,4 @@ class BookingCompleted extends Notification implements ShouldQueue
         ];
     }
 }
+

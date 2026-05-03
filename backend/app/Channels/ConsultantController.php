@@ -39,7 +39,7 @@ class ConsultantController extends Controller
             $ollamaResponse = Http::withoutVerifying()
                 ->timeout(60)
                 ->post("http://72.62.182.106:11434/api/generate", [
-                    'model' => 'llama3',
+                    'model' => 'qwen2.5:7b',
                     'prompt' => $prompt . "\n\nImportant: Respond ONLY with a valid JSON object.",
                     'stream' => false,
                     'format' => 'json'
