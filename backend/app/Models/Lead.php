@@ -15,6 +15,8 @@ class Lead extends Model
         'phone',
         'governorate',
         'interest_type',
+        'social_link',
+        'status',
         'message',
         'ref_code',
     ];

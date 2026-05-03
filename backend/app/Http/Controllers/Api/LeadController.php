@@ -25,6 +25,7 @@ class LeadController extends Controller
             'phone' => 'required|string|max:50',
             'governorate' => 'required|string|max:100',
             'interest_type' => 'required|in:salon,company,affiliate',
+            'social_link' => 'required|url|max:500',
             'message' => 'nullable|string',
             'ref_code' => 'nullable|string', // Removed 'exists' check temporarily to prevent 500 errors during deployment transition
         ]);
@@ -75,6 +76,55 @@ class LeadController extends Controller
             'activeSubscriptions' => $activeSubscriptions,
             'leadsCount' => $leadsCount,
             'growthData' => $growthData
+        ]);
+    }
+    public function updateStatus(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:accepted,rejected',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $lead = Lead::findOrFail($id);
+        $lead->status = $request->status;
+        $lead->save();
+
+        if ($lead->status === 'accepted') {
+            // إرسال رسالة الواتساب التلقائية عبر جسر Node.js
+            $phone = preg_replace('/[^0-9]/', '', $lead->phone);
+            // تأكد من وجود كود البلد (مثال: 20 لمصر)
+            if (strlen($phone) == 11 && str_starts_with($phone, '01')) {
+                $phone = '2' . $phone;
+            }
+
+            $message = "مرحباً بك في O2OEG 🚀\nيسعدنا إبلاغك بقبول طلب انضمامك لمنصتنا!\n\nيرجى الدخول للرابط التالي لاستكمال بيانات " . ($lead->interest_type === 'salon' ? 'صالونك' : ($lead->interest_type === 'company' ? 'شركتك' : 'حسابك كمسوق')) . " والبدء فوراً:\nhttps://o2oeg.com/complete-profile?ref=" . $lead->id;
+
+            try {
+                $bridgeUrl = 'http://127.0.0.1:3000/send-message';
+                $client = new \GuzzleHttp\Client();
+                $client->post($bridgeUrl, [
+                    'json' => [
+                        'phone' => $phone . '@c.us',
+                        'message' => $message,
+                    ],
+                    'headers' => [
+                        'x-api-key' => env('BRIDGE_API_KEY', 'o2oeg_bridge_secret_2026_z8v9')
+                    ],
+                    'timeout' => 5
+                ]);
+            } catch (\Exception $e) {
+                // Log error but don't fail the response
+                \Log::error("Failed to send WhatsApp message to lead: " . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lead status updated successfully!',
+            'data' => $lead
         ]);
     }
 }

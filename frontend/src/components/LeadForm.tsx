@@ -29,6 +29,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, initialInterest })
     phone: '',
     governorate: '',
     interest_type: initialInterest,
+    social_link: '',
     message: ''
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -53,7 +54,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, initialInterest })
       setTimeout(() => {
         onClose();
         setStatus('idle');
-        setFormData({ name: '', phone: '', governorate: '', interest_type: initialInterest, message: '' });
+        setFormData({ name: '', phone: '', governorate: '', interest_type: initialInterest, social_link: '', message: '' });
       }, 2000);
     } catch (err: any) {
       if (err?.response?.status === 429) {
@@ -191,6 +192,13 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose, initialInterest })
                       <option value="">اختر المحافظة...</option>
                       {egyptGovernorates.map(g => <option key={g} value={g}>{g}</option>)}
                     </select>
+                  </div>
+
+                  {/* Social Link */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.5rem' }}>رابط صفحتك أو حسابك (فيسبوك، إنستجرام، تيك توك)</label>
+                    <input required type="url" placeholder="https://..." style={inputStyle} value={formData.social_link}
+                      onChange={e => setFormData({ ...formData, social_link: e.target.value })} />
                   </div>
 
                   {/* Message */}

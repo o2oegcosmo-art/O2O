@@ -138,6 +138,7 @@ Route::middleware(['auth:sanctum', 'tenant.integrations'])->group(function () {
 
     // Leads Admin (Outside nested admin prefix for clarity)
     Route::get('/admin/leads', [LeadController::class, 'index'])->middleware('can:admin-access');
+    Route::put('/admin/leads/{id}/status', [LeadController::class, 'updateStatus'])->middleware('can:admin-access');
 
     // 3. مسارات نظام الحجوزات وخدمات الصالون (محمية باشتراك نشط)
     Route::middleware('subscription')->group(function () {

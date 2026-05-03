@@ -53,6 +53,8 @@ interface Lead {
     phone: string;
     governorate: string;
     interest_type: string;
+    social_link?: string;
+    status?: string;
     created_at: string;
 }
 
@@ -239,6 +241,17 @@ const AdminDashboard: React.FC = () => {
             if (selectedTenant?.id === tenantId) setSelectedTenant(updatedTenants.find((t: Tenant) => t.id === tenantId) || null);
         } catch { toast.error("خطأ في المعالجة"); }
     }, [selectedTenant]);
+
+    const handleLeadStatusUpdate = useCallback(async (leadId: string, newStatus: 'accepted' | 'rejected') => {
+        if (!window.confirm(newStatus === 'accepted' ? 'هل أنت متأكد من قبول هذا الطلب؟ سيتم إرسال رسالة واتساب فوراً.' : 'هل تريد رفض هذا الطلب؟')) return;
+        try {
+            await api.put(`/admin/leads/${leadId}/status`, { status: newStatus });
+            toast.success(newStatus === 'accepted' ? 'تم قبول الطلب وإرسال رسالة الواتساب بنجاح!' : 'تم رفض الطلب');
+            fetchData();
+        } catch (error) {
+            toast.error('حدث خطأ أثناء تحديث حالة الطلب');
+        }
+    }, [fetchData]);
 
     const handleArticleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
@@ -468,9 +481,16 @@ const AdminDashboard: React.FC = () => {
                                     {leads.map(lead => (
                                         <div key={lead.id} className="bg-[#121214] border border-white/5 p-4 rounded-[24px] space-y-3">
                                             <div className="flex justify-between items-start">
-                                                <h3 className="font-bold text-base">{lead.name}</h3>
+                                                <h3 className="font-bold text-base flex items-center gap-2">
+                                                    {lead.name}
+                                                    {lead.social_link && (
+                                                        <a href={lead.social_link} target="_blank" rel="noreferrer" className="text-cyan-400 hover:text-white transition-all">
+                                                            <Link size={14} />
+                                                        </a>
+                                                    )}
+                                                </h3>
                                                 <span className={`px-2 py-1 rounded-lg text-[9px] font-bold ${lead.interest_type === 'salon' ? 'bg-fuchsia-500/10 text-fuchsia-400' : 'bg-cyan-500/10 text-cyan-400'}`}>
-                                                    {lead.interest_type === 'salon' ? 'صالون' : 'شركة'}
+                                                    {lead.interest_type === 'salon' ? 'صالون' : (lead.interest_type === 'company' ? 'شركة' : 'مسوق')}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between items-center text-xs">
@@ -478,9 +498,17 @@ const AdminDashboard: React.FC = () => {
                                                 <span className="font-mono text-cyan-400" dir="ltr">{lead.phone}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-xs">
-                                                <span className="text-white/40">المحافظة:</span>
-                                                <span className="text-white/60">{lead.governorate}</span>
+                                                <span className="text-white/40">الحالة:</span>
+                                                <span className={`font-bold ${lead.status === 'accepted' ? 'text-green-400' : (lead.status === 'rejected' ? 'text-red-400' : 'text-amber-400')}`}>
+                                                    {lead.status === 'accepted' ? 'مقبول' : (lead.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار')}
+                                                </span>
                                             </div>
+                                            {lead.status === 'pending' && (
+                                                <div className="flex gap-2 pt-2 border-t border-white/5 mt-2">
+                                                    <button onClick={() => handleLeadStatusUpdate(lead.id, 'accepted')} className="flex-1 bg-green-500/10 text-green-400 border border-green-500/20 py-2 rounded-xl text-xs font-bold hover:bg-green-500 hover:text-white transition-all">قبول</button>
+                                                    <button onClick={() => handleLeadStatusUpdate(lead.id, 'rejected')} className="flex-1 bg-red-500/10 text-red-400 border border-red-500/20 py-2 rounded-xl text-xs font-bold hover:bg-red-500 hover:text-white transition-all">رفض</button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                     {leads.length === 0 && <p className="text-center text-white/20 py-8">لا يوجد مهتمين حالياً</p>}
@@ -490,15 +518,34 @@ const AdminDashboard: React.FC = () => {
                                 <div className="hidden md:block bg-[#121214] border border-white/5 rounded-[32px] overflow-hidden">
                                     <table className="w-full text-right">
                                         <thead className="bg-white/5 border-b border-white/5">
-                                            <tr><th className="p-6">الاسم</th><th className="p-6">الموبايل</th><th className="p-6">المحافظة</th><th className="p-6">النوع</th></tr>
+                                            <tr><th className="p-6">الاسم</th><th className="p-6">الموبايل</th><th className="p-6">النوع</th><th className="p-6">الروابط</th><th className="p-6">الحالة</th><th className="p-6">إجراء</th></tr>
                                         </thead>
                                         <tbody>
                                             {leads.map(lead => (
                                                 <tr key={lead.id} className="border-b border-white/5 hover:bg-white/[0.02]">
                                                     <td className="p-6 font-bold">{lead.name}</td>
                                                     <td className="p-6 font-mono text-cyan-400" dir="ltr">{lead.phone}</td>
-                                                    <td className="p-6 text-white/60">{lead.governorate}</td>
-                                                    <td className="p-6"><span className={`px-2 py-1 rounded-lg text-[9px] font-bold ${lead.interest_type === 'salon' ? 'bg-fuchsia-500/10 text-fuchsia-400' : 'bg-cyan-500/10 text-cyan-400'}`}>{lead.interest_type === 'salon' ? 'صالون' : 'شركة'}</span></td>
+                                                    <td className="p-6"><span className={`px-2 py-1 rounded-lg text-[9px] font-bold ${lead.interest_type === 'salon' ? 'bg-fuchsia-500/10 text-fuchsia-400' : 'bg-cyan-500/10 text-cyan-400'}`}>{lead.interest_type === 'salon' ? 'صالون' : (lead.interest_type === 'company' ? 'شركة' : 'مسوق')}</span></td>
+                                                    <td className="p-6">
+                                                        {lead.social_link ? (
+                                                            <a href={lead.social_link} target="_blank" rel="noreferrer" className="text-cyan-400 hover:text-white transition-all flex items-center gap-1 text-xs">
+                                                                <Link size={14} /> عرض الحساب
+                                                            </a>
+                                                        ) : <span className="text-white/20 text-xs">لا يوجد</span>}
+                                                    </td>
+                                                    <td className="p-6">
+                                                        <span className={`text-xs font-bold ${lead.status === 'accepted' ? 'text-green-400' : (lead.status === 'rejected' ? 'text-red-400' : 'text-amber-400')}`}>
+                                                            {lead.status === 'accepted' ? 'مقبول' : (lead.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار')}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-6">
+                                                        {(!lead.status || lead.status === 'pending') && (
+                                                            <div className="flex gap-2">
+                                                                <button onClick={() => handleLeadStatusUpdate(lead.id, 'accepted')} className="p-2 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500 hover:text-white transition-all" title="قبول وإرسال رابط التسجيل"><CheckCircle size={16} /></button>
+                                                                <button onClick={() => handleLeadStatusUpdate(lead.id, 'rejected')} className="p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-all" title="رفض"><XCircle size={16} /></button>
+                                                            </div>
+                                                        )}
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
