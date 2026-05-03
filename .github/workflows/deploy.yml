@@ -44,10 +44,11 @@ jobs:
             php artisan migrate:fresh --seed --force
             php artisan optimize
             
-            # تحديث الفرونت إند (Build Clean)
+            # تحديث الفرونت إند (Build Clean) ونقل الملفات للمكان الصحيح
             cd ../frontend
             rm -rf dist
             npm install
             npm run build
+            cp -r dist/* ../backend/public/
             
             echo "🚀 O2OEG Platform has been REBORN and is now LIVE!"
