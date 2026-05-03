@@ -108,15 +108,13 @@ class LeadController extends Controller
             $message = "مرحباً بك في O2OEG 🚀\nيسعدنا إبلاغك بقبول طلب انضمامك لمنصتنا!\n\nيرجى الدخول للرابط التالي لاستكمال بيانات " . ($lead->interest_type === 'salon' ? 'صالونك' : ($lead->interest_type === 'company' ? 'شركتك' : 'حسابك كمسوق')) . " والبدء فوراً:\nhttps://o2oeg.com/complete-profile?ref=" . $lead->id;
 
             try {
-                $bridgeUrl = 'http://127.0.0.1:3000/send-message';
+                $bridgeUrl = 'http://127.0.0.1:9000/send';
                 $client = new \GuzzleHttp\Client();
                 $client->post($bridgeUrl, [
                     'json' => [
-                        'phone' => $phone . '@c.us',
-                        'message' => $message,
-                    ],
-                    'headers' => [
-                        'x-api-key' => env('BRIDGE_API_KEY', 'o2oeg_bridge_secret_2026_z8v9')
+                        'tenantId' => '00000000-0000-0000-0000-000000000000', // Super Admin Session ID
+                        'to' => $phone . '@c.us',
+                        'text' => $message,
                     ],
                     'timeout' => 5
                 ]);
