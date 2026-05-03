@@ -6,7 +6,7 @@ import {
     Shield, X, Clock, FileText,
     Settings, Plus, ShoppingBag,
     PieChart, Info, Package, CheckCircle, XCircle, Search, Trash2,
-    UserCheck, Link, Banknote
+    UserCheck, Link, Banknote, MessageSquare
 } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -101,7 +101,7 @@ interface SupportTicket {
     date: string;
 }
 
-type TabType = 'overview' | 'leads' | 'salons' | 'companies' | 'content' | 'ai_monitor' | 'payments' | 'plans' | 'b2b_analytics' | 'support' | 'products' | 'affiliates';
+type TabType = 'overview' | 'leads' | 'salons' | 'companies' | 'content' | 'ai_monitor' | 'payments' | 'plans' | 'b2b_analytics' | 'support' | 'products' | 'affiliates' | 'whatsapp';
 
 interface AffiliateMarket {
     id: string;
@@ -179,6 +179,9 @@ const AdminDashboard: React.FC = () => {
 
     const [articleForm, setArticleForm] = useState({ title: '', category: 'أخبار الذكاء الاصطناعي', content: '', image: '', author: 'إدارة O2OEG' });
     const [planForm, setPlanForm] = useState({ name: '', price: 0, description: '', services: [] as string[] });
+    const [qrCode, setQrCode] = useState<string | null>(null);
+    const [isBridgeConnected, setIsBridgeConnected] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
 
     const didFetch = useRef(false);
 
@@ -225,12 +228,40 @@ const AdminDashboard: React.FC = () => {
         }
     }, []);
 
+    const fetchQR = useCallback(async () => {
+        const adminTenantId = '00000000-0000-0000-0000-000000000000';
+        try {
+            const response = await axios.get(`http://localhost:9000/status/${adminTenantId}`);
+            if (response.data.needsInit && !isResetting) {
+                setIsResetting(true);
+                try { await axios.post(`http://localhost:9000/init/${adminTenantId}`); } catch (e) {} 
+                finally { setTimeout(() => setIsResetting(false), 2000); }
+            } else if (response.data.connected) {
+                setIsBridgeConnected(true);
+                setQrCode(null);
+                setIsResetting(false);
+            } else if (response.data.qr) {
+                setQrCode(response.data.qr);
+                setIsBridgeConnected(false);
+                setIsResetting(false);
+            } else {
+                if (!isResetting) {
+                    setIsBridgeConnected(false);
+                    setQrCode(null);
+                }
+            }
+        } catch (error) {}
+    }, [isResetting]);
+
     useEffect(() => {
         if (!didFetch.current) {
             fetchData();
             didFetch.current = true;
         }
-    }, [fetchData]);
+        
+        const qrInterval = setInterval(fetchQR, 2000);
+        return () => clearInterval(qrInterval);
+    }, [fetchData, fetchQR]);
 
     const handleToggleService = useCallback(async (tenantId: string, serviceSlug: string, isCurrentlyEnabled: boolean) => {
         try {
@@ -412,6 +443,7 @@ const AdminDashboard: React.FC = () => {
                         { id: 'plans', label: 'الباقات والأسعار', icon: Settings },
                         { id: 'products', label: 'مخزن المنتجات المركزي', icon: Package },
                         { id: 'affiliates', label: 'إدارة المسوقين', icon: UserCheck },
+                        { id: 'whatsapp', label: 'ربط الواتساب (الإدارة)', icon: MessageSquare },
                     ].map((item) => (
                         <button key={item.id} onClick={() => { setActiveTab(item.id as TabType); setIsMobileSidebarOpen(false); }} className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${activeTab === item.id ? 'bg-fuchsia-600 text-white shadow-lg shadow-fuchsia-600/20' : 'text-white/40 hover:bg-white/5 hover:text-white'}`}>
                             <item.icon size={18} />
@@ -1275,6 +1307,63 @@ const AdminDashboard: React.FC = () => {
                         )}
 
 
+                        {activeTab === 'whatsapp' && (
+                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md mx-auto">
+                                <div className="bg-[#121214] border border-white/10 rounded-[40px] p-8 text-center space-y-6">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-green-500/20">
+                                        <MessageSquare size={40} className="text-white" />
+                                    </div>
+                                    
+                                    <div>
+                                        <h2 className="text-2xl font-black mb-2">ربط واتساب الإدارة</h2>
+                                        <p className="text-xs text-white/40 leading-relaxed px-4">قم بمسح الكود لتفعيل الإرسال التلقائي لرسائل القبول والترحيب للمهتمين الجدد.</p>
+                                    </div>
+
+                                    {isBridgeConnected ? (
+                                        <div className="py-10 space-y-4">
+                                            <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full mx-auto flex items-center justify-center border border-green-500/20">
+                                                <CheckCircle size={32} />
+                                            </div>
+                                            <p className="text-green-400 font-bold">تم الاتصال بنجاح</p>
+                                            <button 
+                                                onClick={async () => {
+                                                    if(window.confirm('هل تريد قطع الاتصال؟')) {
+                                                        try { await axios.post(`http://localhost:9000/logout/00000000-0000-0000-0000-000000000000`); fetchData(); } catch(e){}
+                                                    }
+                                                }}
+                                                className="text-[10px] text-white/20 hover:text-red-400 transition-all underline"
+                                            >
+                                                قطع الاتصال الحالي
+                                            </button>
+                                        </div>
+                                    ) : qrCode ? (
+                                        <div className="space-y-6">
+                                            <div className="relative p-4 bg-white rounded-[32px] inline-block shadow-2xl shadow-white/5 group">
+                                                <img src={qrCode} alt="WhatsApp QR" className="w-64 h-64 rounded-xl" />
+                                                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[32px]">
+                                                    <Smartphone size={32} className="text-black" />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-center gap-2 text-amber-400">
+                                                <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                                                <span className="text-xs font-bold uppercase tracking-widest">انتظار المسح...</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="py-20 flex flex-col items-center gap-4">
+                                            <div className="w-12 h-12 border-4 border-white/5 border-t-fuchsia-500 rounded-full animate-spin" />
+                                            <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">جاري تجهيز محرك الربط...</p>
+                                        </div>
+                                    )}
+
+                                    <div className="pt-6 border-t border-white/5">
+                                        <p className="text-[9px] text-white/20 leading-relaxed">
+                                            ملاحظة: هذا الحساب سيتم استخدامه لإرسال روابط التسجيل لجميع الصالونات والشركات المقبولة.
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
                 </AnimatePresence>
                 </div>
             </main>
