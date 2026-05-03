@@ -12,6 +12,7 @@ const pino = require('pino');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const QRCode = require('qrcode');
 
 const app = express();
 app.use(express.json());
@@ -181,9 +182,18 @@ app.get('/status/:tenantId', async (req, res) => {
         return res.json({ connected: false, qr: null, needsInit: true });
     }
 
+    let qrImage = null;
+    if (session.qr) {
+        try {
+            qrImage = await QRCode.toDataURL(session.qr);
+        } catch (err) {
+            console.error('QR Generation Error:', err);
+        }
+    }
+
     res.json({
         connected: session.isConnected,
-        qr: session.qr,
+        qr: qrImage,
         tenantId: session.tenantId
     });
 });
