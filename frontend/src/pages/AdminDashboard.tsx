@@ -174,6 +174,8 @@ const AdminDashboard: React.FC = () => {
     const [productSearch, setProductSearch] = useState('');
     const [productFilter, setProductFilter] = useState('all');
     const [productStats, setProductStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+    const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+    const [addLeadForm, setAddLeadForm] = useState({ name: '', phone: '', governorate: 'القاهرة', interest_type: 'salon', social_link: '', message: '' });
 
     const [articleForm, setArticleForm] = useState({ title: '', category: 'أخبار الذكاء الاصطناعي', content: '', image: '', author: 'إدارة O2OEG' });
     const [planForm, setPlanForm] = useState({ name: '', price: 0, description: '', services: [] as string[] });
@@ -252,6 +254,19 @@ const AdminDashboard: React.FC = () => {
             toast.error('حدث خطأ أثناء تحديث حالة الطلب');
         }
     }, [fetchData]);
+
+    const handleAddLeadSubmit = useCallback(async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await api.post('/leads', addLeadForm);
+            toast.success("تم إضافة المتقدم بنجاح");
+            setShowAddLeadModal(false);
+            setAddLeadForm({ name: '', phone: '', governorate: 'القاهرة', interest_type: 'salon', social_link: '', message: '' });
+            fetchData();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "خطأ في الإضافة");
+        }
+    }, [addLeadForm, fetchData]);
 
     const handleArticleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
@@ -474,7 +489,12 @@ const AdminDashboard: React.FC = () => {
 
                         {activeTab === 'leads' && (
                             <div className="space-y-6">
-                                <h2 className="text-2xl font-bold">إدارة المهتمين</h2>
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-2xl font-bold">إدارة المهتمين</h2>
+                                    <button onClick={() => setShowAddLeadModal(true)} className="px-6 py-2 bg-gradient-to-r from-fuchsia-600 to-cyan-600 text-white font-bold rounded-xl flex items-center gap-2 hover:scale-105 transition-all">
+                                        <Plus size={18} /> إضافة متقدم يدوياً
+                                    </button>
+                                </div>
                                 
                                 {/* Mobile View: Cards */}
                                 <div className="md:hidden space-y-4">
@@ -1414,6 +1434,52 @@ const AdminDashboard: React.FC = () => {
                             >
                                 إغلاق النافذة
                             </button>
+                        </motion.div>
+                    </div>
+                )}
+                {showAddLeadModal && (
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAddLeadModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative w-full max-w-md bg-[#121214] border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-8">
+                            <button onClick={() => setShowAddLeadModal(false)} className="absolute top-6 left-6 text-white/20 hover:text-white transition-all"><X size={20} /></button>
+                            <h3 className="text-2xl font-bold mb-6 text-right">إضافة متقدم جديد</h3>
+                            <form onSubmit={handleAddLeadSubmit} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2">
+                                        <label className="text-[10px] font-bold text-white/40 block mb-1 mr-2">الاسم بالكامل</label>
+                                        <input required placeholder="اسم العميل" value={addLeadForm.name} onChange={e => setAddLeadForm({ ...addLeadForm, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-fuchsia-500" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-white/40 block mb-1 mr-2">الموبايل / واتساب</label>
+                                        <input required placeholder="01xxxxxxxxx" value={addLeadForm.phone} onChange={e => setAddLeadForm({ ...addLeadForm, phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-fuchsia-500" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-white/40 block mb-1 mr-2">النوع</label>
+                                        <select value={addLeadForm.interest_type} onChange={e => setAddLeadForm({ ...addLeadForm, interest_type: e.target.value as any })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-fuchsia-500 text-sm appearance-none">
+                                            <option value="salon">صالون</option>
+                                            <option value="company">شركة</option>
+                                            <option value="affiliate">مسوق</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-[10px] font-bold text-white/40 block mb-1 mr-2">المحافظة</label>
+                                        <select value={addLeadForm.governorate} onChange={e => setAddLeadForm({ ...addLeadForm, governorate: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-fuchsia-500 text-sm appearance-none">
+                                            {["القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "الغربية", "الشرقية", "المنوفية", "القليوبية", "البحيرة", "كفر الشيخ", "دمياط", "بورسعيد", "الإسماعيلية", "السويس", "الفيوم", "بني سويف", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر", "أسوان", "البحر الأحمر", "الوادي الجديد", "مطروح", "شمال سيناء", "جنوب سيناء"].map(g => (
+                                                <option key={g} value={g}>{g}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-[10px] font-bold text-white/40 block mb-1 mr-2">رابط التواصل الاجتماعي (موثق)</label>
+                                        <input required placeholder="https://facebook.com/..." value={addLeadForm.social_link} onChange={e => setAddLeadForm({ ...addLeadForm, social_link: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-cyan-500 text-xs" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-[10px] font-bold text-white/40 block mb-1 mr-2">ملاحظات إضافية</label>
+                                        <textarea placeholder="أي تفاصيل أخرى..." value={addLeadForm.message} onChange={e => setAddLeadForm({ ...addLeadForm, message: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 h-24 focus:outline-none focus:border-fuchsia-500 text-sm" />
+                                    </div>
+                                </div>
+                                <button type="submit" className="w-full bg-gradient-to-r from-fuchsia-600 to-cyan-600 text-white font-black py-4 rounded-2xl hover:scale-[1.02] transition-all shadow-lg shadow-fuchsia-600/20 mt-4">حفظ البيانات والمتابعة</button>
+                            </form>
                         </motion.div>
                     </div>
                 )}
