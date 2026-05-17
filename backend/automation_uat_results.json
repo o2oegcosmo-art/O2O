@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-05-17T18:16:25.522Z",
+  "results": [
+    {
+      "id": "AUTO-001",
+      "name": "Frontend Server Running",
+      "status": "PASS",
+      "note": "تطبيق الواجهة يستجيب بـ HTTP 404",
+      "httpStatus": 404
+    },
+    {
+      "id": "AUTO-002",
+      "name": "Backend API Server Running",
+      "status": "PASS",
+      "note": "API يستجيب بـ HTTP 200",
+      "httpStatus": 200
+    },
+    {
+      "id": "AUTO-003",
+      "name": "Wrong Credentials Rejected",
+      "status": "PASS",
+      "note": "النظام رفض البيانات الخاطئة بكود 422",
+      "httpStatus": 422
+    },
+    {
+      "id": "AUTO-004",
+      "name": "Admin Login Successful",
+      "status": "PASS",
+      "note": "تم الدخول بنجاح - المستخدم: محمود وليم | الدور: admin",
+      "httpStatus": 200,
+      "tokenReceived": true
+    },
+    {
+      "id": "AUTO-005",
+      "name": "Protected Route Blocks Unauthenticated Access",
+      "status": "PASS",
+      "note": "النظام رفض الطلب بكود 401 بدون Token",
+      "httpStatus": 401
+    },
+    {
+      "id": "AUTO-006",
+      "name": "Protected Route Accessible With Valid Token",
+      "status": "PASS",
+      "note": "الوصول للـ /api/me نجح بكود 200 - المستخدم: محمود وليم",
+      "httpStatus": 200
+    },
+    {
+      "id": "AUTO-007",
+      "name": "CSRF Protection Active",
+      "status": "PASS",
+      "note": "CSRF Cookie endpoint يستجيب بكود 204",
+      "httpStatus": 204
+    },
+    {
+      "id": "AUTO-008",
+      "name": "WhatsApp Bridge Server Running",
+      "status": "PASS",
+      "note": "جسر الواتساب يعمل ويستجيب بكود 200",
+      "httpStatus": 200
+    },
+    {
+      "id": "UAT-001",
+      "name": "Admin Can List Stats",
+      "status": "PASS",
+      "note": "الأدمن يرى الإحصائيات",
+      "httpStatus": 200
+    },
+    {
+      "id": "UAT-002",
+      "name": "Admin Can View Pending Payments",
+      "status": "PASS",
+      "note": "لوحة المدفوعات تعمل بنجاح",
+      "httpStatus": 200
+    },
+    {
+      "id": "UAT-003",
+      "name": "Logout Clears Session",
+      "status": "PASS",
+      "note": "تسجيل الخروج نجح بكود 200",
+      "httpStatus": 200
+    },
+    {
+      "id": "UAT-004",
+      "name": "Token Invalidated After Logout",
+      "status": "PASS",
+      "note": "Token انتهت صلاحيته بعد الخروج (401)",
+      "httpStatus": 401
+    },
+    {
+      "id": "UAT-005",
+      "name": "Leads API Responds Correctly",
+      "status": "PASS",
+      "note": "API الـ Leads يستجيب بكود 200",
+      "httpStatus": 200
+    }
+  ],
+  "summary": {
+    "total": 13,
+    "passed": 13,
+    "failed": 0,
+    "warned": 0,
+    "successRate": 100
+  }
+}

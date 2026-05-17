@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>O2O EG: AI Beauty Hub - المقال</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#4b4263",
+                    "inverse-surface": "#e6e0e9",
+                    "tertiary-fixed": "#ffdf93",
+                    "inverse-on-surface": "#322f35",
+                    "on-secondary": "#342b4b",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#4f378a",
+                    "primary-fixed-dim": "#cfbcff",
+                    "on-primary": "#381e72",
+                    "primary": "#cfbcff",
+                    "on-surface": "#e6e0e9",
+                    "on-background": "#e6e0e9",
+                    "tertiary": "#e7c365",
+                    "outline-variant": "#494551",
+                    "surface": "#141218",
+                    "surface-container-low": "#1d1b20",
+                    "error": "#ffb4ab",
+                    "on-primary-container": "#e0d2ff",
+                    "surface-tint": "#cfbcff",
+                    "on-tertiary-container": "#503d00",
+                    "outline": "#948e9c",
+                    "on-tertiary-fixed": "#241a00",
+                    "on-primary-fixed": "#22005d",
+                    "inverse-primary": "#6750a4",
+                    "background": "#141218",
+                    "surface-container-highest": "#36343a",
+                    "surface-dim": "#141218",
+                    "surface-bright": "#3b383e",
+                    "error-container": "#93000a",
+                    "primary-fixed": "#e9ddff",
+                    "secondary-container": "#4d4465",
+                    "tertiary-fixed-dim": "#e7c365",
+                    "secondary-fixed": "#e9ddff",
+                    "surface-container": "#211f24",
+                    "on-surface-variant": "#cbc4d2",
+                    "surface-variant": "#36343a",
+                    "secondary": "#cdc0e9",
+                    "tertiary-container": "#c9a74d",
+                    "secondary-fixed-dim": "#cdc0e9",
+                    "on-tertiary": "#3e2e00",
+                    "on-error": "#690005",
+                    "on-secondary-container": "#bfb2da",
+                    "surface-container-lowest": "#0f0d13",
+                    "on-tertiary-fixed-variant": "#594400",
+                    "primary-container": "#6750a4",
+                    "surface-container-high": "#2b292f",
+                    "on-secondary-fixed": "#1f1635"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "120px",
+                    "base": "8px",
+                    "gutter": "24px",
+                    "margin": "40px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter", "sans-serif"],
+                    "h2": ["Space Grotesk", "sans-serif"],
+                    "h1": ["Space Grotesk", "sans-serif"],
+                    "h3": ["Space Grotesk", "sans-serif"],
+                    "body-md": ["Inter", "sans-serif"],
+                    "label-caps": ["Space Grotesk", "sans-serif"],
+                    "space-grotesk": ["Space Grotesk", "sans-serif"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "2.0", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "h2": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                    "h1": ["64px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                    "h3": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "2.0", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0C;
+            color: #e6e0e9;
+            overflow-x: hidden;
+        }
+        .bg-glow-fuchsia {
+            background: radial-gradient(circle, rgba(192, 38, 211, 0.1) 0%, transparent 70%);
+        }
+        .bg-glow-cyan {
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="font-body-md selection:bg-fuchsia-500/30">
+<!-- Radial Background Orbs -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+<div class="bg-glow-fuchsia absolute top-[-20%] left-[-10%] w-[800px] h-[800px]"></div>
+<div class="bg-glow-cyan absolute bottom-[-20%] right-[-10%] w-[800px] h-[800px]"></div>
+</div>
+<!-- TopNavBar -->
+<nav class="bg-black/20 backdrop-blur-2xl border-b border-white/10 docked full-width top-0 z-50 shadow-[0_0_20px_rgba(255,0,255,0.1)] flex justify-between items-center w-full px-6 py-4 max-w-full mx-auto rtl:flex-row-reverse fixed">
+<div class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-500 to-cyan-400 font-space-grotesk font-bold tracking-tight">
+            O2O EG: AI Beauty Hub
+        </div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-white/70 hover:text-white transition-colors font-space-grotesk font-bold tracking-tight" href="#">Home</a>
+<a class="text-cyan-400 border-b-2 border-cyan-400 pb-1 font-space-grotesk font-bold tracking-tight" href="#">Insights</a>
+<a class="text-white/70 hover:text-white transition-colors font-space-grotesk font-bold tracking-tight" href="#">Trends</a>
+<a class="text-white/70 hover:text-white transition-colors font-space-grotesk font-bold tracking-tight" href="#">Solutions</a>
+<a class="text-white/70 hover:text-white transition-colors font-space-grotesk font-bold tracking-tight" href="#">AI Lab</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-white/70 hover:text-white transition-all duration-300">notifications</button>
+<button class="material-symbols-outlined text-white/70 hover:text-white transition-all duration-300">account_circle</button>
+</div>
+</nav>
+<main class="pt-32 pb-section-gap px-margin">
+<div class="max-w-[1000px] mx-auto">
+<!-- Back to Articles -->
+<a class="inline-flex items-center gap-2 text-cyan-400 hover:text-fuchsia-400 transition-colors mb-12 group" href="#">
+<span class="material-symbols-outlined transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+<span class="font-space-grotesk font-bold text-label-caps">العودة إلى المقالات</span>
+</a>
+<!-- Article Header -->
+<header class="mb-16">
+<div class="flex flex-wrap gap-3 mb-8">
+<span class="px-4 py-1.5 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-400 font-space-grotesk font-bold text-label-caps shadow-[0_0_15px_rgba(192,38,211,0.2)]">إدارة الصالونات</span>
+<span class="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-space-grotesk font-bold text-label-caps shadow-[0_0_15px_rgba(6,182,212,0.2)]">الذكاء الاصطناعي</span>
+</div>
+<h1 class="text-h1 font-h1 text-white mb-10 leading-[1.1] tracking-tight">كيف يغير الذكاء الاصطناعي مستقبل إدارة صالونات التجميل الفاخرة في عام 2024</h1>
+<div class="flex items-center gap-8 text-on-surface-variant font-body-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-cyan-400">calendar_today</span>
+<span>15 مايو 2024</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-fuchsia-400" data-weight="fill" style="font-variation-settings: 'FILL' 1;">person</span>
+<span>د. سارة المنصوري</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-cyan-400">schedule</span>
+<span>8 دقائق للقراءة</span>
+</div>
+</div>
+</header>
+<!-- Featured Image -->
+<div class="relative w-full aspect-video rounded-3xl overflow-hidden mb-section-gap shadow-[0_40px_100px_rgba(0,0,0,0.5)] border border-white/5">
+<img alt="Interior of a luxury modern hair salon with soft neon lighting and minimalist aesthetic" class="w-full h-full object-cover" data-alt="ultra-modern luxury hair salon interior with floating circular mirrors, minimalist furniture, and soft cyan and fuchsia ambient lighting leaks" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3-mX4eTgL10CQhPrvbOxIcrFnnbk7Ts-roVBkLvjregrFE2JEncRvOidd2dI0M_oxKcX1eAkE85UPjvIAyxmrNOS6PN6zcRR85VSAxnLUV2R8ywkN6FHfrKxgO7fj2XI3cmOyrFU5YlwpQnDMDs5UY7NKC4v_AOVtTFUpoHfZ7HwItmTlKFyzroKWrWv1JystEsC-oJQyr39vUE319-QWc4Nv9bz6dGTLmDEAkgho-UtU2zUXRXRmBiNq2ldkgokYNgA60AjPrLo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-transparent to-transparent opacity-80"></div>
+</div>
+<!-- Body Content -->
+<article class="max-w-[800px] mx-auto">
+<p class="text-body-lg font-body-lg text-[#c8c5ca] mb-12">
+                    في عصر التحول الرقمي السريع، لم يعد الذكاء الاصطناعي مجرد رفاهية تقنية، بل أصبح العمود الفقري الذي يرتكز عليه نجاح مشاريع التجميل الكبرى. نشهد اليوم ثورة في كيفية تفاعل العملاء مع العلامات التجارية الفاخرة، حيث تلعب البيانات الدور الأساسي في تخصيص التجربة لكل فرد.
+                </p>
+<h2 class="text-h2 font-h2 text-white mb-8">التنبؤ باحتياجات العملاء</h2>
+<p class="text-body-md font-body-md text-[#c8c5ca] mb-8">
+                    تسمح خوارزميات التعلم الآلي لمديري الصالونات بتحليل سلوكيات الحجز السابقة، مما يمكنهم من التنبؤ بمواعيد الزيارات القادمة قبل حدوثها. هذا لا يعزز فقط من كفاءة التوظيف، بل يضمن أيضاً أن يشعر العميل بالاهتمام الشخصي الفائق.
+                </p>
+<!-- Stylized Blockquote -->
+<blockquote class="relative my-16 p-8 rounded-2xl bg-white/5 border-r-4 border-l-0 border-gradient-to-b from-fuchsia-500 to-cyan-400 backdrop-blur-xl">
+<div class="absolute -right-4 -top-6 text-6xl text-fuchsia-500/20 font-serif leading-none">"</div>
+<p class="text-h3 font-h3 text-white italic leading-relaxed">
+                        إن المستقبل ينتمي لأولئك الذين يستطيعون دمج اللمسة الإنسانية الدافئة مع الدقة المتناهية للذكاء الاصطناعي.
+                    </p>
+<cite class="block mt-4 text-cyan-400 font-space-grotesk font-bold not-italic">— رؤية المركز التقني للتجميل</cite>
+<div class="absolute top-0 right-0 h-full w-1 bg-gradient-to-b from-fuchsia-500 to-cyan-400 rounded-full"></div>
+</blockquote>
+<h2 class="text-h2 font-h2 text-white mb-8">الأتمتة الذكية والعمليات</h2>
+<p class="text-body-md font-body-md text-[#c8c5ca] mb-8">
+                    من إدارة المخزون التلقائية إلى مساعدي الحجز الرقميين، توفر حلول AI آلاف الساعات الضائعة سنوياً. في O2O EG، نؤمن أن التكنولوجيا يجب أن تختفي في الخلفية لتفسح المجال للإبداع والجمال.
+                </p>
+<ul class="space-y-6 mb-12">
+<li class="flex items-start gap-4">
+<span class="material-symbols-outlined text-fuchsia-400 mt-1">check_circle</span>
+<span class="text-body-md font-body-md text-[#c8c5ca]">تحليل فوري لحالة البشرة باستخدام رؤية الحاسوب.</span>
+</li>
+<li class="flex items-start gap-4">
+<span class="material-symbols-outlined text-fuchsia-400 mt-1">check_circle</span>
+<span class="text-body-md font-body-md text-[#c8c5ca]">تسعير ديناميكي يعتمد على الطلب والوقت.</span>
+</li>
+<li class="flex items-start gap-4">
+<span class="material-symbols-outlined text-fuchsia-400 mt-1">check_circle</span>
+<span class="text-body-md font-body-md text-[#c8c5ca]">روبوتات دردشة تفاعلية تفهم اللهجات المحلية.</span>
+</li>
+</ul>
+<h2 class="text-h2 font-h2 text-white mb-8">رؤية للمستقبل</h2>
+<p class="text-body-md font-body-md text-[#c8c5ca] mb-12">
+                    لا يتوقف الأمر عند هذا الحد، فالمستقبل يحمل تجارب الواقع المعزز المدمجة بالذكاء الاصطناعي، حيث يمكن للعميل رؤية نتائج الصبغة أو القص قبل البدء الفعلي، مما يقلل من احتمالية عدم الرضا ويزيد من ولاء العميل للصالون.
+                </p>
+</article>
+<!-- Footer CTA -->
+<section class="mt-section-gap">
+<div class="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[32px] p-12 text-center relative overflow-hidden group">
+<!-- Subtle inner glow -->
+<div class="absolute inset-0 bg-gradient-to-tr from-fuchsia-500/5 to-cyan-400/5 opacity-50"></div>
+<h3 class="text-h2 font-h2 text-white mb-6 relative z-10">هل أنت مستعد لتطوير مشروع التجميل الخاص بك؟</h3>
+<p class="text-body-lg font-body-lg text-[#c8c5ca] mb-10 relative z-10 max-w-[600px] mx-auto">
+                        انضم إلى مئات المحترفين الذين يستخدمون أدواتنا لتعزيز أعمالهم وتحقيق قفزات نوعية في الأداء والربحية.
+                    </p>
+<button class="relative z-10 px-10 py-5 bg-gradient-to-r from-fuchsia-600 to-cyan-500 rounded-xl font-space-grotesk font-black text-white text-lg shadow-[0_10px_40px_rgba(192,38,211,0.3)] hover:shadow-[0_20px_60px_rgba(192,38,211,0.5)] transition-all duration-300 hover:scale-105 active:scale-95">
+                        ابدأ الآن مجاناً
+                    </button>
+<!-- Decorative accent -->
+<div class="absolute -bottom-20 -right-20 w-64 h-64 bg-fuchsia-500/10 blur-[100px] rounded-full"></div>
+<div class="absolute -top-20 -left-20 w-64 h-64 bg-cyan-400/10 blur-[100px] rounded-full"></div>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-black/40 backdrop-blur-xl border-t border-white/10 w-full mt-20 flex flex-col md:flex-row justify-between items-center px-8 py-12 gap-6 rtl:flex-row-reverse">
+<div class="text-lg font-bold text-white font-space-grotesk">
+            O2O EG AI Beauty Hub
+        </div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="text-white/50 hover:text-cyan-400 transition-colors font-space-grotesk text-sm" href="#">Privacy Policy</a>
+<a class="text-white/50 hover:text-cyan-400 transition-colors font-space-grotesk text-sm" href="#">Terms of Service</a>
+<a class="text-white/50 hover:text-cyan-400 transition-colors font-space-grotesk text-sm" href="#">Contact</a>
+<a class="text-white/50 hover:text-cyan-400 transition-colors font-space-grotesk text-sm" href="#">AI Ethics</a>
+</div>
+<div class="text-white/50 font-space-grotesk text-sm">
+            © 2024 O2O EG AI Beauty Hub. All rights reserved.
+        </div>
+</footer>
+</body></html>

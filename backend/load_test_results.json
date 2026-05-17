@@ -1,0 +1,86 @@
+{
+  "timestamp": "2026-05-17T14:39:37.191Z",
+  "server": "http://localhost:8000",
+  "summary": {
+    "totalRequests": 250,
+    "passed": 250,
+    "failed": 0,
+    "successRate": 100,
+    "avgResponseTime": 2654,
+    "maxResponseTime": 6380,
+    "totalDurationMs": 119862,
+    "throughput": 2
+  },
+  "scenarios": [
+    {
+      "name": "LOAD-001: API Root Check",
+      "path": "/api/health",
+      "method": "GET",
+      "total": 50,
+      "passed": 50,
+      "failed": 0,
+      "successRate": 100,
+      "avgTime": 3021,
+      "minTime": 478,
+      "maxTime": 6205,
+      "totalTime": 27893,
+      "status": "PASS"
+    },
+    {
+      "name": "LOAD-002: Login Endpoint Stress",
+      "path": "/api/login",
+      "method": "POST",
+      "total": 50,
+      "passed": 50,
+      "failed": 0,
+      "successRate": 100,
+      "avgTime": 2534,
+      "minTime": 365,
+      "maxTime": 6380,
+      "totalTime": 22200,
+      "status": "PASS"
+    },
+    {
+      "name": "LOAD-003: Leads Listing",
+      "path": "/api/leads",
+      "method": "GET",
+      "total": 50,
+      "passed": 50,
+      "failed": 0,
+      "successRate": 100,
+      "avgTime": 2583,
+      "minTime": 442,
+      "maxTime": 4965,
+      "totalTime": 23546,
+      "status": "PASS"
+    },
+    {
+      "name": "LOAD-004: CSRF Cookie",
+      "path": "/sanctum/csrf-cookie",
+      "method": "GET",
+      "total": 50,
+      "passed": 50,
+      "failed": 0,
+      "successRate": 100,
+      "avgTime": 2527,
+      "minTime": 469,
+      "maxTime": 4645,
+      "totalTime": 22638,
+      "status": "PASS"
+    },
+    {
+      "name": "LOAD-005: Admin Tenants",
+      "path": "/api/admin/tenants",
+      "method": "GET",
+      "total": 50,
+      "passed": 50,
+      "failed": 0,
+      "successRate": 100,
+      "avgTime": 2604,
+      "minTime": 433,
+      "maxTime": 4813,
+      "totalTime": 23583,
+      "status": "PASS"
+    }
+  ]
+}

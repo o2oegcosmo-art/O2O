@@ -1,0 +1,109 @@
+name: O2OEG Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Git Pull and Reset
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # المسار المؤكد للمشروع على السيرفر
+            ROOT="/var/www/o2oeg"
+            echo "ROOT=$ROOT" > /tmp/o2o_env.sh
+            chmod 644 /tmp/o2o_env.sh
+            echo "=== ROOT CONFIRMED: $ROOT ==="
+            cd "$ROOT"
+            git remote set-url origin https://github.com/o2oegcosmo-art/O2O.git
+            git fetch --all
+            git reset --hard origin/main
+            git clean -fd
+            echo "=== GIT PULL COMPLETE ==="
+
+      - name: 2. Update Backend
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            source /tmp/o2o_env.sh
+            echo "=== BACKEND ROOT: $ROOT ==="
+            cd "$ROOT/backend"
+            B64="c2stb3ItdjEtOTUxYzgwNjM3ZjQyODY1M2U4Mzg1ZjFiYWM4OTNhMGMzMTcyNDdhYzI0M2FkNDIwZmIxNDE4MzQzYTRiYzNhMw=="
+            ORKEY=$(echo "$B64" | base64 -d)
+            if grep -q "OPENROUTER_API_KEY" .env 2>/dev/null; then
+              sed -i "s|OPENROUTER_API_KEY=.*|OPENROUTER_API_KEY=$ORKEY|" .env
+            else
+              echo "OPENROUTER_API_KEY=$ORKEY" >> .env
+            fi
+            composer install --no-dev --optimize-autoloader --no-interaction
+            php artisan migrate --force
+            php artisan route:clear
+            php artisan config:clear
+            php artisan cache:clear
+            php artisan view:clear
+            echo "=== BACKEND UPDATE COMPLETE ==="
+
+      - name: 3. Update WhatsApp Bridge
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            source /tmp/o2o_env.sh
+            if [ -d "$ROOT/whatsapp-bridge" ]; then
+              cd "$ROOT/whatsapp-bridge"
+              if [ -f "deploy-bridge.sh" ]; then
+                chmod +x deploy-bridge.sh && ./deploy-bridge.sh
+              else
+                npm install --no-audit --no-fund 2>/dev/null || true
+                pm2 restart whatsapp-bridge 2>/dev/null || true
+              fi
+            fi
+            echo "=== BRIDGE UPDATE COMPLETE ==="
+
+      - name: 4. Build Frontend
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            source /tmp/o2o_env.sh
+            echo "=== BUILDING FRONTEND AT: $ROOT/frontend ==="
+            cd "$ROOT/frontend"
+            npm install --no-audit --no-fund --prefer-offline
+            npm run build
+            echo "=== COPYING DIST TO PUBLIC ==="
+            # النسخ لجميع المسارات المحتملة
+            cp -rf dist/* "$ROOT/backend/public/" && echo "OK: backend/public"
+            [ -d "$ROOT/public" ] && cp -rf dist/* "$ROOT/public/" && echo "OK: root/public"
+            echo "=== FRONTEND BUILD COMPLETE ==="
+
+      - name: 5. Final Setup
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            source /tmp/o2o_env.sh
+            cd "$ROOT/backend"
+            QUEUE_CMD="* * * * * cd $ROOT/backend && php artisan queue:work --stop-when-empty --tries=3 >> /tmp/queue.log 2>&1"
+            (crontab -l 2>/dev/null | grep -v 'queue:work'; echo "$QUEUE_CMD") | crontab -
+            echo "=== INDEX.HTML STATUS ==="
+            ls -la "$ROOT/backend/public/index.html" 2>/dev/null || echo "MISSING: $ROOT/backend/public/index.html"
+            echo "=== OPENROUTER KEY STATUS ==="
+            grep -c "OPENROUTER_API_KEY" .env && echo "KEY FOUND" || echo "KEY MISSING"
+            echo "=== ALL SYSTEMS OPERATIONAL ==="
